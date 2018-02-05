@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='sirius',
-    version='0.0.1',
+    version='0.0.2',
     description='Stellar Python SDK for Humans.',
     url='https://github.com/hard-codr/sirius.git',
     license='Apache',
@@ -23,6 +23,6 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     install_requires=[
-        'ed25519', 'crc16', 'requests',
+        'ed25519', 'crc16', 'requests', 'sseclient',
     ]
 )

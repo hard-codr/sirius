@@ -2,12 +2,13 @@
 
 import ed25519
 import requests
+import crc16
+import sseclient
 import json
 import base64
 import datetime
 import binascii
 import hashlib
-import crc16
 import struct
 from decimal import Decimal
 
@@ -260,8 +261,23 @@ class Fetchable(object):
             return self.map2obj(r.json())
         return Fetchable.Page(lambda x : self.map2obj(x), r.json())
 
-    def stream(self):
-        pass
+    def stream(self, cursor=None, limit=10, order='asc'):
+        if self.streamed:
+            urlsep = '&' if self.url.find('?') >= 0 else '?' 
+            if cursor:
+                self.url = '%s%scursor=%s&limit=%s&order=%s' %\
+                        (self.url, urlsep, cursor, limit, order)
+            else:
+                self.url = '%s%slimit=%s&order=%s' % (self.url,\
+                        urlsep, limit, order)
+
+            eventsource = sseclient.SSEClient(horizon + self.url)
+            for event in eventsource:
+                if event.data == '"hello"':
+                    continue
+                yield self.map2obj(json.loads(event.data))
+        else:
+            raise Exception('stream not supported')
 
     def map2obj(self, data):
         """Function that subclass need to implemet to convert json object to
@@ -320,6 +336,7 @@ class Accounts(Fetchable):
         def __init__(self, data):
             """Construct Account object given data dict having all the account related field."""
             self.id = data['id']
+            self.paging_token = data['paging_token']
             self.sequence = data['sequence']
             self.subentry_count = int(data['subentry_count'])
             self.thresholds = Accounts.Thresholds(data['thresholds'])
@@ -340,6 +357,7 @@ class Accounts(Fetchable):
             raise ValueError('accid expected')
         self.accid = accid
         self.paginated = False
+        self.streamed = False
         self.url = '/accounts/%s' % self.accid
 
     def map2obj(self, data):
@@ -373,6 +391,7 @@ class Transactions(Fetchable):
         """
         def __init__(self, data):
             self.trxid = data['id']
+            self.paging_token = data['paging_token']
             self.hash = data['hash']
             self.ledger = int(data['ledger'])
             self.account = data['source_account']
@@ -401,6 +420,7 @@ class Transactions(Fetchable):
             raise ValueError('transaction id required')
         self.trxid = trxid
         self.paginated = False
+        self.streamed = False
         self.url = '/transactions/%s' % self.trxid
 
     def map2obj(self, data):
@@ -421,6 +441,7 @@ class Transactions(Fetchable):
     class All(Fetchable):
         def __init__(self, baseurl=''):
             self.paginated = True
+            self.streamed = True
             self.url = baseurl + '/transactions/'
 
         def map2obj(self, data):
@@ -434,6 +455,7 @@ class Ledgers(Fetchable):
         """
         def __init__(self, data):
             self.ledid = data['id']
+            self.paging_token = data['paging_token']
             self.hash = data['hash']
             self.prev_hash = data['prev_hash']
             self.ledseq = int(data['sequence'])
@@ -455,6 +477,7 @@ class Ledgers(Fetchable):
             raise ValueError('ledger id expected')
         self.ledseq = ledseq
         self.paginated = False
+        self.streamed = False
         self.url = '/ledgers/%s' % self.ledseq
 
     def map2obj(self, data):
@@ -479,6 +502,7 @@ class Ledgers(Fetchable):
     class All(Fetchable):
         def __init__(self, baseurl=''):
             self.paginated = True
+            self.streamed = True
             self.url = baseurl + '/ledgers/'
 
         def map2obj(self, data):
@@ -492,6 +516,7 @@ class Operations(Fetchable):
         """
         def __init__(self, data):
             self.opid = data['id']
+            self.paging_token = data['paging_token']
             self.source_account = data['source_account']
             self.type = data['type']
             self.type_i = t = int(data['type_i'])
@@ -571,6 +596,7 @@ class Operations(Fetchable):
             raise ValueError('operation id expected')
         self.opid = opid 
         self.paginated = False
+        self.streamed = False
         self.url = '/operations/%s' % self.opid
 
     def map2obj(self, data):
@@ -583,6 +609,7 @@ class Operations(Fetchable):
     class All(Fetchable):
         def __init__(self, baseurl=''):
             self.paginated = True
+            self.streamed = True
             self.url = baseurl + '/operations/'
 
         def map2obj(self, data):
@@ -592,6 +619,7 @@ class Payments(object):
     class Payment(object):
         def __init__(self, data):
             self.pid = data['id']
+            self.paging_token = data['paging_token']
             self.source_account = data['source_account']
             self.type = data['type']
             self.type_i = int(data['type_i'])
@@ -615,6 +643,7 @@ class Payments(object):
     class All(Fetchable):
         def __init__(self, baseurl=''):
             self.paginated = True
+            self.streamed = True
             self.url = baseurl + '/payments/'
 
         def map2obj(self, data):
@@ -624,6 +653,7 @@ class Effects(object):
     class Effect(object):
         def __init__(self, data):
             self.effectid = data['id']
+            self.paging_token = data['paging_token']
             self.account = data['account']
             self.type = data['type']
             self.type_i = t = data['type_i']
@@ -673,6 +703,7 @@ class Effects(object):
     class All(Fetchable):
         def __init__(self, baseurl=''):
             self.paginated = True
+            self.streamed = True
             self.url = baseurl + '/effects/'
 
         def map2obj(self, data):
@@ -682,6 +713,7 @@ class Offers(Fetchable):
     class Offer(object):
         def __init__(self, data):
             self.offerid = data['id']
+            self.paging_token = data['paging_token']
             self.seller = data['seller']
             self.selling = Asset(data['selling'])
             self.buying = Asset(data['buying'])
@@ -696,6 +728,7 @@ class Offers(Fetchable):
     class __All(Fetchable):
         def __init__(self, baseurl=''):
             self.paginated = True
+            self.streamed = False
             self.url = baseurl + '/offers/'
 
         def map2obj(self, data):
@@ -730,6 +763,7 @@ class Orderbooks(object):
     class All(Fetchable):
         def __init__(self, selling, buying):
             self.paginated = False
+            self.streamed = False
             self.url = '/order_book?%s&%s' %\
                     (Asset.format_url_parameters(selling, 'selling_'), 
                             Asset.format_url_parameters(buying, 'buying_'))
@@ -741,6 +775,7 @@ class Assets(object):
     class AssetDetails(object):
         def __init__(self, data):
             self.asset = Asset(data)
+            self.paging_token = data['paging_token']
             self.num_accounts = data['num_accounts']
             self.flags = Accounts.Flags(data['flags'])
             self.toml = data['_links']['toml']['href']
@@ -751,6 +786,7 @@ class Assets(object):
     class All(Fetchable):
         def __init__(self, asset_code, asset_issuer):
             self.paginated = True
+            self.streamed = False
             self.url = '/assets?'
             if asset_code:
                 self.url = '%sasset_code=%s&' % (self.url, asset_code)
@@ -788,6 +824,7 @@ class PaymentPaths(object):
     class All(Fetchable):
         def __init__(self, from_account, to_account, to_asset, amount):
             self.paginated = False
+            self.streamed = False
             self.url = '/paths?source_account=%s&destination_account=%s&%s&destination_amount=%s'\
                     % (from_account, to_account,
                             Asset.format_url_parameters(to_asset, 'destination_'), amount)
