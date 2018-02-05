@@ -31,21 +31,29 @@ network_id = hashlib.sha256(network_password).digest()
 
 def setup_test_network():
     """Sets the current network to test network"""
+    global horizon, network_id, network_password
     horizon = HORIZON_TESTNET_ENDPOINT
     network_password = NETWORK_PASSWORD_TESTNET
     network_id = hashlib.sha256(network_password).digest()
 
 def setup_public_network():
     """Sets the current network to stellar.org public network"""
+    global horizon, network_id, network_password
     horizon = HORIZON_PUBLIC_ENDPOINT
     network_password = NETWORK_PASSWORD_PUBLIC
     network_id = hashlib.sha256(network_password).digest()
 
 def setup_custom_network(horizon_url, password):
     """Sets network to custom horizon endpoint"""
+    global horizon, network_id, network_password
     horizon = horizon_url
     network_password = password
     network_id = hashlib.sha256(network_password).digest()
+
+def get_current_network():
+    """Returns tuple containing current network_id and horizon endpoint url"""
+    global horizon, network_id, network_password
+    return (network_id, horizon)
 
 #Shortens address for display purpose
 def shorten_address(address):
