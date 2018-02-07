@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import ed25519
-import requests
 import crc16
 import sseclient
 import json
@@ -11,6 +10,7 @@ import binascii
 import hashlib
 import struct
 from decimal import Decimal
+from utils import Http
 
 from stellarxdr import Xdr
 
@@ -242,13 +242,13 @@ class Fetchable(object):
 
         def next(self):
             """fetches next page from the network and returns page object"""
-            r = requests.get(self.nextlink)
-            return Fetchable.Page(self.mapper, r.json())
+            r = Http.get(self.nextlink)
+            return Fetchable.Page(self.mapper, r)
 
         def prev(self):
             """fetches prev page from the network and returns page object"""
-            r = requests.get(self.prevlink)
-            return Fetchable.Page(self.mapper, r.json())
+            r = Http.get(self.prevlink)
+            return Fetchable.Page(self.mapper, r)
 
     def fetch(self, cursor=None, limit=10, order='asc'):
         """Returns single or page object for given query. If paged object
@@ -264,10 +264,10 @@ class Fetchable(object):
                 self.url = '%s%slimit=%s&order=%s' % (self.url,\
                         urlsep, limit, order)
 
-        r = requests.get(horizon + self.url)
+        r = Http.get(horizon + self.url)
         if not self.paginated:
-            return self.map2obj(r.json())
-        return Fetchable.Page(lambda x : self.map2obj(x), r.json())
+            return self.map2obj(r)
+        return Fetchable.Page(lambda x : self.map2obj(x), r)
 
     def stream(self, cursor=None, limit=10, order='asc'):
         if self.streamed:
@@ -279,7 +279,7 @@ class Fetchable(object):
                 self.url = '%s%slimit=%s&order=%s' % (self.url,\
                         urlsep, limit, order)
 
-            eventsource = sseclient.SSEClient(horizon + self.url)
+            eventsource = Http.stream(horizon + self.url)
             for event in eventsource:
                 if event.data == '"hello"':
                     continue
@@ -904,13 +904,19 @@ class NewTransaction(object):
 
         payload = base64.b64encode(txpacker.get_buffer())
 
-        res = requests.post(horizon + '/transactions/', {'tx': payload }).json()
+        res = Http.post(horizon + '/transactions/', {'tx': payload })
         if 'status' in res:
             self.status = res['status']
             self.error = res['title']
-            if 'extras' in res:
-                self.transaction_error = res['extras']['result_codes']['transaction']
-                self.operation_errors = res['extras']['result_codes']['operations']
+            if 'extras' in res and 'result_codes' in res['extras']:
+                result_codes = res['extras']['result_codes']
+                self.transaction_error = result_codes['transaction']\
+                        if 'transaction' in result_codes else ''
+                self.operation_errors = result_codes['operations']\
+                        if 'operations' in result_codes else []
+            else:
+                self.transaction_error = ''
+                self.operation_errors = []
         else:
             self.status = 0
             self.trxid = res['hash']
@@ -934,7 +940,7 @@ class NewTransaction(object):
         if self.is_success():
             raise Exception('Transaction succeeded. Check result()')
         else:
-            return (self.transaction_error, self.operation_errors)
+            return (self.error, self.transaction_error, self.operation_errors)
 
     def create_account(self, account, starting_balance):
         """Creates account with given starting balance
