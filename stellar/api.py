@@ -30,7 +30,7 @@ network_password = NETWORK_PASSWORD_TESTNET
 network_id = hashlib.sha256(network_password).digest()
 
 def setup_test_network():
-    """Sets the current network to test network"""
+    """Sets the current network to stellar.org test network"""
     global horizon, network_id, network_password
     horizon = HORIZON_TESTNET_ENDPOINT
     network_password = NETWORK_PASSWORD_TESTNET
@@ -133,7 +133,7 @@ def sign_trx_hash(signer, trx_hash):
     return Xdr.types.DecoratedSignature(hint, signature)    
 
 #Returns memo xdr given memo in either string format or (type, value) format
-#where type in ('id', 'hash', 'ret_hash')
+#where type in ('id', 'hash', 'return')
 def memo_to_xdr(memo):
     if type(memo) == str or type(memo) == unicode:
         #raise length error if len(memo) > 28
@@ -143,13 +143,18 @@ def memo_to_xdr(memo):
         if memo[0] == 'id':
             return Xdr.types.Memo(type=Xdr.const.MEMO_ID, id=int(memo[1]))
         elif memo[0] == 'hash':
-            return Xdr.types.Memo(type=Xdr.const.MEMO_HASH, hash=memo[1])
-        elif memo[0] == 'ret_hash':
-            return Xdr.types.Memo(type=Xdr.const.MEMO_RETURN, retHash=memo[1])
+            return Xdr.types.Memo(type=Xdr.const.MEMO_HASH, 
+                    hash=binascii.unhexlify(memo[1]))
+        elif memo[0] == 'return':
+            return Xdr.types.Memo(type=Xdr.const.MEMO_RETURN, 
+                    retHash=binascii.unhexlify(memo[1]))
         else:
             raise Exception('memo type [%s] not support' % memo[0])
     else:
         return Xdr.types.Memo(type=Xdr.const.MEMO_NONE)
+
+def time_bounds_to_xdr(time_bounds):
+    return Xdr.types.TimeBounds(time_bounds[0], time_bounds[1])
 
 def account_from_secret(secret):
     """Returns account-id given the secret"""
@@ -230,6 +235,7 @@ class Fetchable(object):
     can be iterated.
     """
     class Page(object):
+        #XXX: Tutorial for using page
         def __init__(self, mapper, data):
             self.mapper = mapper
             self.records = [self.mapper(r) for r in data['_embedded']['records']]
@@ -269,6 +275,30 @@ class Fetchable(object):
             return self.map2obj(r)
         return Fetchable.Page(lambda x : self.map2obj(x), r)
 
+    def first(self):
+        """Helper method for paginated query. returns first record for given paged
+        resource or None if thier are not records for given query. 
+        e.g. to fetch first transaction:
+        >>> stellar.transactions().first()
+        """
+        r = self.fetch(limit=1, order='asc').records
+        if len(r) > 0:
+            return r[0]
+        else:
+            return None
+
+    def last(self):
+        """Helper method for paginated query. returns last record for given paged
+        resource or None if thier are not records for given query.
+        e.g. to fetch last transaction:
+        >>> stellar.transactions().last()
+        """
+        r = self.fetch(limit=1, order='desc').records
+        if len(r) > 0:
+            return r[0]
+        else:
+            return None
+
     def stream(self, cursor=None, limit=10, order='asc'):
         if self.streamed:
             urlsep = '&' if self.url.find('?') >= 0 else '?' 
@@ -288,7 +318,7 @@ class Fetchable(object):
             raise Exception('stream not supported')
 
     def map2obj(self, data):
-        """Function that subclass need to implemet to convert json object to
+        """Function that subclass need to implemet to convert parsed json object to
         python object, according to resource that is requested
         """
         pass
@@ -414,7 +444,7 @@ class Transactions(Fetchable):
                 self.memo = (memo_type, data['memo'])
             elif memo_type == 'id':
                 self.memo = (memo_type, int(data['memo']))
-            elif memo_type in ['hash', 'return_hash']:
+            elif memo_type in ['hash', 'return']:
                 self.memo = (memo_type, binascii.hexlify(base64.b64decode(data['memo'])))
             else:
                 self.memo = None
@@ -841,9 +871,10 @@ class PaymentPaths(object):
             return PaymentPaths(data)
 
 class NewTransaction(object):
-    def __init__(self, account, signers, fee, memo, time_bounds):
+    def __init__(self, account, signers, seq, fee, memo, time_bounds):
         self.account = account
         self.signers = signers
+        self.seq = seq
         self.fee = fee
         self.memo = memo
         self.time_bounds = time_bounds
@@ -866,11 +897,12 @@ class NewTransaction(object):
 
     def submit(self):
         """Submits transaction to network. """
-        account_seq = int(account(self.account).fetch().sequence) + 1
+        account_seq = self.seq if self.seq else (int(account(self.account).fetch().sequence) + 1)
 
         self.__add_set_options_op()
 
         base_fee = self.fee if self.fee else BASE_FEE*len(self.ops)
+        time_bounds = [time_bounds_to_xdr(self.time_bounds)] if self.time_bounds else []
 
         xdr = Xdr.nullclass()
         xdr.v = 0
@@ -878,7 +910,7 @@ class NewTransaction(object):
                 address_to_xdr(self.account), 
                 base_fee, 
                 account_seq,
-                self.time_bounds,
+                time_bounds,
                 memo_to_xdr(self.memo), 
                 self.ops,
                 xdr)
@@ -1296,11 +1328,12 @@ def orderbook(buying, selling):
     """
     return Orderbooks.All(buying, selling)
 
-def new_transaction(account, signers=[], fee=None, memo=None, time_bounds=[]):
+def new_transaction(account, signers=[], seq=None, fee=None, memo=None, time_bounds=[]):
     """Creates new transaction.
     account - can be public key or secret. If account is self signed then
     secret of the account is sufficient. Otherwise public key in account parameter
     and signers must have secrets of the necessary signers of that account.
+    seq - sequence of transaction, if not given will get last sequence and increment by one
     fee - fee, if given, will be used instead of default fee of 100 stroops/op.
     memo - optional text memo in string format or tuple (memo_type, memo_data) for other formats.
     time_bounds - if given, upper and lower bounds for the transaction to be effective.
@@ -1317,4 +1350,4 @@ def new_transaction(account, signers=[], fee=None, memo=None, time_bounds=[]):
     set inflation destination and auth flags in single transaction then it will only
     cost you 100 stroops. 
     """
-    return NewTransaction(account, signers, fee, memo, time_bounds)
+    return NewTransaction(account, signers, seq, fee, memo, time_bounds)
