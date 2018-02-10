@@ -9,10 +9,9 @@ import datetime
 import binascii
 import hashlib
 import struct
-from decimal import Decimal
-from utils import Http
 
 from stellarxdr import Xdr
+from utils import HTTP, XDR
 
 HORIZON_PUBLIC_ENDPOINT = 'https://horizon.stellar.org'
 HORIZON_TESTNET_ENDPOINT = 'https://horizon-testnet.stellar.org'
@@ -59,66 +58,6 @@ def get_current_network():
 def shorten_address(address):
     return '%s__%s' % (address[:4], address[-4:])
 
-#Returns xdr for stellar address where 
-#public address in format such as GBWF6NTCPGBROJIPF54XXYRLTUGBDLLORPFDK4FGQQ3IRI4T5PHCGVXV
-#or secret in format such as SDUHI5BSX67EA22KW7NWDREQNZBOYEYEBOHJ6N53WTG3WIEUCNMNC3HZ
-def address_to_xdr(address):
-    decoded = base64.b32decode(address)
-    return Xdr.types.PublicKey(Xdr.const.KEY_TYPE_ED25519, decoded[1:-2])
-
-#Returns amount xdr where amount is represent as long value and every decimal 
-#is multiplied by 10^7 to store it in max precision.
-def amount_to_xdr(amount):
-    return int((Decimal(amount)*Decimal(10**7)).to_integral_exact())
-
-#Returns price xdr where price in (numerator, denominator) format
-def price_to_xdr(price):
-    return Xdr.types.Price(price[0], price[1])
-
-#Returns asset code xdr where asset_code in string format e.g. 'USD', 'XLM' or 'MYCOOLASSET'
-def assetcode_to_xdr(asset_code):
-    code_length = len(asset_code)
-    pad_length = 4 - code_length if code_length <= 4 else 12 - code_length
-    asset_code = bytearray(self.code, 'ascii') + b'\x00' * pad_length
-
-    xdr = Xdr.nullclass()
-    if code_length <= 4:
-        xdr.type = Xdr.const.ASSET_TYPE_CREDIT_ALPHANUM4
-        xdr.assetCode4 = asset_code
-    else:
-        xdr.type = Xdr.const.ASSET_TYPE_CREDIT_ALPHANUM12
-        xdr.assetCode12 = asset_code
-
-    return xdr
-
-#Returns signer xdr, where signer_type can be 'ed25519PublicKey', 'hashX', 'preAuthTX'
-def signer_key_to_xdr(signer_type, signer):
-    if signer_type == 'ed25519PublicKey':
-        return Xdr.types.SignerKey(Xdr.const.SIGNER_KEY_TYPE_ED25519, address_to_xdr(signer))
-    if signer_type == 'hashX':
-        return Xdr.types.SignerKey(Xdr.const.SIGNER_KEY_TYPE_HASH_X, hashX=signer)
-    if signer_type == 'preAuthTX':
-        return Xdr.types.SignerKey(Xdr.const.SIGNER_KEY_TYPE_PRE_AUTH_TX, preAuthTx=signer)
-
-#Returns asset xdr given asset in tuple format (asset_code, asset_issuer) or 'native'
-def asset_to_xdr(asset):
-    if ((type(asset) == str or type(asset) == unicode) and asset == 'native') \
-            or (len(asset) == 1 and asset[0] == 'native'):
-        return native_asset.to_xdr()
-    else:
-        if len(asset[0]) <= 4:
-            return Asset({
-                'asset_type' : 'credit_alphanum4',
-                'asset_code' : asset[0],
-                'asset_issuer' : asset[1]
-                }).to_xdr()
-        else:
-            return Asset({
-                'asset_type' : 'credit_alphanum12',
-                'asset_code' : asset[0],
-                'asset_issuer' : asset[1]
-                }).to_xdr()
-
 def __get_seed_from_secret(secret):
     decoded = base64.b32decode(secret)
     return decoded[1:-2]
@@ -131,30 +70,6 @@ def sign_trx_hash(signer, trx_hash):
     signature = signing_key.sign(trx_hash)
     hint = bytes(public_key.ed25519[-4:])
     return Xdr.types.DecoratedSignature(hint, signature)    
-
-#Returns memo xdr given memo in either string format or (type, value) format
-#where type in ('id', 'hash', 'return')
-def memo_to_xdr(memo):
-    if type(memo) == str or type(memo) == unicode:
-        #raise length error if len(memo) > 28
-        return Xdr.types.Memo(type=Xdr.const.MEMO_TEXT, 
-                text=bytearray(memo, encoding='utf-8'))
-    elif (type(memo) == tuple or type(memo) == list) and len(memo) == 2:
-        if memo[0] == 'id':
-            return Xdr.types.Memo(type=Xdr.const.MEMO_ID, id=int(memo[1]))
-        elif memo[0] == 'hash':
-            return Xdr.types.Memo(type=Xdr.const.MEMO_HASH, 
-                    hash=binascii.unhexlify(memo[1]))
-        elif memo[0] == 'return':
-            return Xdr.types.Memo(type=Xdr.const.MEMO_RETURN, 
-                    retHash=binascii.unhexlify(memo[1]))
-        else:
-            raise Exception('memo type [%s] not support' % memo[0])
-    else:
-        return Xdr.types.Memo(type=Xdr.const.MEMO_NONE)
-
-def time_bounds_to_xdr(time_bounds):
-    return Xdr.types.TimeBounds(time_bounds[0], time_bounds[1])
 
 def account_from_secret(secret):
     """Returns account-id given the secret"""
@@ -183,24 +98,6 @@ class Asset(object):
                 self.limit = data[limit_key]
         else:
             self.asset_code = 'XLM'
-
-    def to_xdr(self):
-        if self.asset_type == 'native':
-            return Xdr.types.Asset(type=Xdr.const.ASSET_TYPE_NATIVE)
-        else:
-            code_length = len(self.asset_code)
-            pad_length = 4 - code_length if code_length <= 4 else 12 - code_length
-
-            xdr = Xdr.nullclass()
-            xdr.assetCode = bytearray(self.code, 'ascii') + b'\x00' * pad_length
-            xdr.issuer = address_to_xdr(self.asset_issuer)
-
-            if code_length <= 4:
-                return Xdr.types.Asset(type=Xdr.const.ASSET_TYPE_CREDIT_ALPHANUM4, 
-                        alphaNum4=xdr)
-            else:
-                return Xdr.types.Asset(type=Xdr.const.ASSET_TYPE_CREDIT_ALPHANUM12,
-                        alphaNum12=xdr)
 
     def __repr__(self):
         return 'Asset(native)' if self.asset_type == 'native' else 'Asset(%s,%s,%s)'\
@@ -248,12 +145,12 @@ class Fetchable(object):
 
         def next(self):
             """fetches next page from the network and returns page object"""
-            r = Http.get(self.nextlink)
+            r = HTTP.get(self.nextlink)
             return Fetchable.Page(self.mapper, r)
 
         def prev(self):
             """fetches prev page from the network and returns page object"""
-            r = Http.get(self.prevlink)
+            r = HTTP.get(self.prevlink)
             return Fetchable.Page(self.mapper, r)
 
     def fetch(self, cursor=None, limit=10, order='asc'):
@@ -270,7 +167,7 @@ class Fetchable(object):
                 self.url = '%s%slimit=%s&order=%s' % (self.url,\
                         urlsep, limit, order)
 
-        r = Http.get(horizon + self.url)
+        r = HTTP.get(horizon + self.url)
         if not self.paginated:
             return self.map2obj(r)
         return Fetchable.Page(lambda x : self.map2obj(x), r)
@@ -309,7 +206,7 @@ class Fetchable(object):
                 self.url = '%s%slimit=%s&order=%s' % (self.url,\
                         urlsep, limit, order)
 
-            eventsource = Http.stream(horizon + self.url)
+            eventsource = HTTP.stream(horizon + self.url)
             for event in eventsource:
                 if event.data == '"hello"':
                     continue
@@ -902,16 +799,16 @@ class NewTransaction(object):
         self.__add_set_options_op()
 
         base_fee = self.fee if self.fee else BASE_FEE*len(self.ops)
-        time_bounds = [time_bounds_to_xdr(self.time_bounds)] if self.time_bounds else []
+        time_bounds = [XDR.time_bounds_to_xdr(self.time_bounds)] if self.time_bounds else []
 
         xdr = Xdr.nullclass()
         xdr.v = 0
         trxxdr = Xdr.types.Transaction(
-                address_to_xdr(self.account), 
+                XDR.address_to_xdr(self.account), 
                 base_fee, 
                 account_seq,
                 time_bounds,
-                memo_to_xdr(self.memo), 
+                XDR.memo_to_xdr(self.memo), 
                 self.ops,
                 xdr)
 
@@ -936,7 +833,7 @@ class NewTransaction(object):
 
         payload = base64.b64encode(txpacker.get_buffer())
 
-        res = Http.post(horizon + '/transactions/', {'tx': payload })
+        res = HTTP.post(horizon + '/transactions/', {'tx': payload })
         if 'status' in res:
             self.status = res['status']
             self.error = res['title']
@@ -980,9 +877,9 @@ class NewTransaction(object):
         body = Xdr.nullclass()
         body.type = Xdr.const.CREATE_ACCOUNT
         body.createAccountOp = Xdr.types.CreateAccountOp(
-                address_to_xdr(account),
-                amount_to_xdr(starting_balance))
-        self.ops += [Xdr.types.Operation([address_to_xdr(self.account)], body)]
+                XDR.address_to_xdr(account),
+                XDR.amount_to_xdr(starting_balance))
+        self.ops += [Xdr.types.Operation([XDR.address_to_xdr(self.account)], body)]
 
         return self
 
@@ -993,10 +890,10 @@ class NewTransaction(object):
         body = Xdr.nullclass()
         body.type = Xdr.const.PAYMENT
         body.paymentOp = Xdr.types.PaymentOp(
-                address_to_xdr(account),
-                asset_to_xdr(asset),
-                amount_to_xdr(amount))
-        self.ops += [Xdr.types.Operation([address_to_xdr(self.account)], body)]
+                XDR.address_to_xdr(account),
+                XDR.asset_to_xdr(asset),
+                XDR.amount_to_xdr(amount))
+        self.ops += [Xdr.types.Operation([XDR.address_to_xdr(self.account)], body)]
 
         return self
 
@@ -1009,18 +906,18 @@ class NewTransaction(object):
         pathxdr = []
         #XXX is this tested?
         for p in path:
-            pathxdr += [asset_to_xdr(p)]
+            pathxdr += [XDR.asset_to_xdr(p)]
 
         body = Xdr.nullclass()
         body.type = Xdr.const.PathPaymentOp
         body.pathPaymentOp = Xdr.types.PaymentOp(
-                asset_to_xdr(send_asset),
-                amount_to_xdr(max_send),
-                address_to_xdr(destination),
-                asset_to_xdr(dest_asset),
-                amount_to_xdr(dest_amount),
+                XDR.asset_to_xdr(send_asset),
+                XDR.amount_to_xdr(max_send),
+                XDR.address_to_xdr(destination),
+                XDR.asset_to_xdr(dest_asset),
+                XDR.amount_to_xdr(dest_amount),
                 pathxdr)
-        self.ops += [Xdr.types.Operation([address_to_xdr(self.account)], body)]
+        self.ops += [Xdr.types.Operation([XDR.address_to_xdr(self.account)], body)]
 
         return self
 
@@ -1039,11 +936,11 @@ class NewTransaction(object):
         body = Xdr.nullclass()
         body.type = Xdr.const.CREATE_PASSIVE_OFFER
         body.createPassiveOfferOp = Xdr.types.CreatePassiveOfferOp(
-                asset_to_xdr(sell_asset),
-                asset_to_xdr(buy_asset),
-                amount_to_xdr(sell_amount),
-                price_to_xdr(price))
-        self.ops += [Xdr.types.Operation([address_to_xdr(self.account)], body)]
+                XDR.asset_to_xdr(sell_asset),
+                XDR.asset_to_xdr(buy_asset),
+                XDR.amount_to_xdr(sell_amount),
+                XDR.price_to_xdr(price))
+        self.ops += [Xdr.types.Operation([XDR.address_to_xdr(self.account)], body)]
 
         return self
 
@@ -1055,12 +952,12 @@ class NewTransaction(object):
         body = Xdr.nullclass()
         body.type = Xdr.const.MANAGE_OFFER
         body.manageOfferOp = Xdr.types.ManageOfferOp(
-                asset_to_xdr(sell_asset),
-                asset_to_xdr(buy_asset),
-                amount_to_xdr(sell_amount),
-                price_to_xdr(price),
+                XDR.asset_to_xdr(sell_asset),
+                XDR.asset_to_xdr(buy_asset),
+                XDR.amount_to_xdr(sell_amount),
+                XDR.price_to_xdr(price),
                 offer_id)
-        self.ops += [Xdr.types.Operation([address_to_xdr(self.account)], body)]
+        self.ops += [Xdr.types.Operation([XDR.address_to_xdr(self.account)], body)]
 
         return self
 
@@ -1135,7 +1032,7 @@ class NewTransaction(object):
             toarray = lambda m, x : [] if x not in m else [m[x]]
 
             inflation_destination_ = [] if 'inflation' not in self.set_options_op\
-                    else [address_to_xdr(self.set_options_op['inflation'])]
+                    else [XDR.address_to_xdr(self.set_options_op['inflation'])]
             set_flags_ = toarray(self.set_options_op, 'set_flags')
             clear_flags_ = toarray(self.set_options_op, 'clear_flags')
             high_ = toarray(self.set_options_op, 'high')
@@ -1145,7 +1042,7 @@ class NewTransaction(object):
             signer_ = toarray(self.set_options_op, 'signer')
             if len(signer_) > 0:
                 signer_ = signer_[0]
-                signer_ = [signer_key_to_xdr(signer_[0], signer_[1]), signer_[2]]
+                signer_ = [XDR.signer_key_to_xdr(signer_[0], signer_[1]), signer_[2]]
             home_domain_ = toarray(self.set_options_op, 'home_domain')
 
             body = Xdr.nullclass()
@@ -1157,7 +1054,7 @@ class NewTransaction(object):
                     low_, medium_, high_,
                     home_domain_,
                     signer_)
-            self.ops += [Xdr.types.Operation([address_to_xdr(self.account)], body)]
+            self.ops += [Xdr.types.Operation([XDR.address_to_xdr(self.account)], body)]
 
     def create_or_update_trust(self, asset, limit):
         """Creates or update trust for given asset with specified limit.
@@ -1167,9 +1064,9 @@ class NewTransaction(object):
         body = Xdr.nullclass()
         body.type = Xdr.const.CHANGE_TRUST
         body.changeTrustOp = Xdr.types.ChangeTrustOp(
-                asset_to_xdr(asset),
-                amount_to_xdr(limit))
-        self.ops += [Xdr.types.Operation([address_to_xdr(self.account)], body)]
+                XDR.asset_to_xdr(asset),
+                XDR.amount_to_xdr(limit))
+        self.ops += [Xdr.types.Operation([XDR.address_to_xdr(self.account)], body)]
 
         return self
 
@@ -1183,10 +1080,10 @@ class NewTransaction(object):
         body = Xdr.nullclass()
         body.type = Xdr.const.ALLOW_TRUST
         body.allowTrustOp = Xdr.types.AllowTrustOp(
-                address_to_xdr(account),
-                assetcode_to_xdr(asset_code),
+                XDR.address_to_xdr(account),
+                XDR.assetcode_to_xdr(asset_code),
                 is_allow)
-        self.ops += [Xdr.types.Operation([address_to_xdr(self.account)], body)]
+        self.ops += [Xdr.types.Operation([XDR.address_to_xdr(self.account)], body)]
 
         return self
 
@@ -1202,8 +1099,8 @@ class NewTransaction(object):
         """Merges current account with input account"""
         body = Xdr.nullclass()
         body.type = Xdr.const.ACCOUNT_MERGE
-        body.destination = address_to_xdr(account)
-        self.ops += [Xdr.types.Operation([address_to_xdr(self.account)], body)]
+        body.destination = XDR.address_to_xdr(account)
+        self.ops += [Xdr.types.Operation([XDR.address_to_xdr(self.account)], body)]
 
         return self
 
@@ -1211,7 +1108,7 @@ class NewTransaction(object):
         """Runs inflation process with this account """
         body = Xdr.nullclass()
         body.type = Xdr.const.INFLATION
-        self.ops += [Xdr.types.Operation([address_to_xdr(self.account)], body)]
+        self.ops += [Xdr.types.Operation([XDR.address_to_xdr(self.account)], body)]
 
         return self
 
@@ -1225,7 +1122,7 @@ class NewTransaction(object):
         body = Xdr.nullclass()
         body.type = Xdr.const.MANAGE_DATA
         body.manageDataOp = Xdr.types.ManageDataOp(key, value)
-        self.ops += [Xdr.types.Operation([address_to_xdr(self.account)], body)]
+        self.ops += [Xdr.types.Operation([XDR.address_to_xdr(self.account)], body)]
 
         return self
 
