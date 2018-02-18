@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from .keys import random_keypair, account_from_secret
 from .api import setup_test_network, setup_public_network, setup_custom_network, get_current_network
 from .api import account, transaction, ledger, operation
 from .api import transactions, ledgers, effects, operations, payments

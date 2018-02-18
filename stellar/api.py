@@ -10,14 +10,12 @@ import binascii
 import hashlib
 import struct
 
-from stellarxdr import Xdr
-from utils import HTTP, XDR
+from .xdr import Xdr
+from .utils import HTTP, XDR
+from .keys import account_from_secret
 
 HORIZON_PUBLIC_ENDPOINT = 'https://horizon.stellar.org'
 HORIZON_TESTNET_ENDPOINT = 'https://horizon-testnet.stellar.org'
-
-NETWORK_TESTNET = 'TESTNET'
-NETWORK_PUBLIC = 'PUBLIC'
 
 NETWORK_PASSWORD_PUBLIC = 'Public Global Stellar Network ; September 2015'
 NETWORK_PASSWORD_TESTNET = 'Test SDF Network ; September 2015'
@@ -50,9 +48,9 @@ def setup_custom_network(horizon_url, password):
     network_id = hashlib.sha256(network_password).digest()
 
 def get_current_network():
-    """Returns tuple containing current network_id and horizon endpoint url"""
+    """Returns tuple containing horizon endpoint url and current network_id"""
     global horizon, network_id, network_password
-    return (network_id, horizon)
+    return (horizon, network_id)
 
 #Shortens address for display purpose
 def shorten_address(address):
@@ -70,14 +68,6 @@ def sign_trx_hash(signer, trx_hash):
     signature = signing_key.sign(trx_hash)
     hint = bytes(public_key.ed25519[-4:])
     return Xdr.types.DecoratedSignature(hint, signature)    
-
-def account_from_secret(secret):
-    """Returns account-id given the secret"""
-    signing_key = ed25519.SigningKey(__get_seed_from_secret(secret))
-    payload = binascii.a2b_hex('30') + signing_key.get_verifying_key().to_bytes()
-    checksum = crc16.crc16xmodem(payload)
-    checksum = struct.pack('H', checksum)
-    return base64.b32encode(payload + checksum)
 
 class Asset(object):
     """ Asset represents either stellar native asset or asset code with given issuer """
@@ -232,8 +222,8 @@ class Accounts(Fetchable):
 
     class Flags(object):
         def __init__(self, data):
-            self.auth_required = data['auth_required'] == 'true'
-            self.auth_revocable = data['auth_revocable'] == 'true'
+            self.auth_required = data['auth_required']
+            self.auth_revocable = data['auth_revocable']
 
         def __repr__(self):
             return 'Flags(required=%s, revocable=%s)' % (self.auth_required, self.auth_revocable)
@@ -270,7 +260,7 @@ class Accounts(Fetchable):
         """
         def __init__(self, data):
             """Construct Account object given data dict having all the account related field."""
-            self.id = data['id']
+            self.account_id = data['id']
             self.paging_token = data['paging_token']
             self.sequence = data['sequence']
             self.subentry_count = int(data['subentry_count'])
@@ -285,7 +275,7 @@ class Accounts(Fetchable):
                 self.inflation_destination = None
 
         def __repr__(self):
-            return 'Account(id=%s,seq=%s,balances=%s)' % (self.id, self.sequence, self.balances)
+            return 'Account(id=%s,seq=%s,balances=%s)' % (self.account_id, self.sequence, self.balances)
 
     def __init__(self, accid):
         if not accid:
@@ -334,7 +324,7 @@ class Transactions(Fetchable):
             self.fee_paid = int(data['fee_paid'])
             self.operation_count = int(data['operation_count'])
             self.created_at = datetime.datetime.strptime(
-                    data['created_at'], "%Y-%m-%dT%H:%M:%SZ")
+                    data['created_at'], '%Y-%m-%dT%H:%M:%SZ')
 
             memo_type = data['memo_type']
             if memo_type == 'text':
@@ -377,7 +367,7 @@ class Transactions(Fetchable):
         def __init__(self, baseurl=''):
             self.paginated = True
             self.streamed = True
-            self.url = baseurl + '/transactions/'
+            self.url = baseurl + '/transactions'
 
         def map2obj(self, data):
             return Transactions.Transaction(data)
@@ -438,7 +428,7 @@ class Ledgers(Fetchable):
         def __init__(self, baseurl=''):
             self.paginated = True
             self.streamed = True
-            self.url = baseurl + '/ledgers/'
+            self.url = baseurl + '/ledgers'
 
         def map2obj(self, data):
             return Ledgers.Ledger(data)
@@ -475,33 +465,58 @@ class Operations(Fetchable):
                 self.to_account = data['to']
                 self.asset = Asset(data)
                 self.send_asset = Asset(data, 'send_')
-            elif t == 3 or t == 4:
+            elif t == 3:
                 self.offer_id = data['offer_id']
+                self.amount = data['amount']
+                self.price = data['price']
+                self.buying_asset = Asset(data, 'buying_')
+                self.selling_asset = Asset(data, 'selling_')
+            elif t == 4:
                 self.amount = data['amount']
                 self.price = data['price']
                 self.buying_asset = Asset(data, 'buying_')
                 self.selling_asset = Asset(data, 'selling_')
             elif t == 5:
                 if 'low_threshold' in data:
-                    self.low_thresholds =  data['low_threshold']
+                    self.low_threshold =  (True, data['low_threshold'])
+                else:
+                    self.low_threshold = (False, None)
                 if 'med_threshold' in data:
-                    self.med_threshold =  data['med_threshold']
+                    self.med_threshold =  (True, data['med_threshold'])
+                else:
+                    self.med_threshold = (False, None)
                 if 'high_threshold' in data:
-                    self.high_threshold =  data['high_threshold']
+                    self.high_threshold = (True, data['high_threshold'])
+                else:
+                    self.high_threshold = (False, None)
                 if 'inflation_dest' in data:
-                    self.inflation_dest = data['inflation_dest']
+                    self.inflation_dest = (True, data['inflation_dest'])
+                else:
+                    self.inflation_dest = (False, None)
                 if 'home_domain' in data:
-                    self.home_domain = data['home_domain']
+                    self.home_domain = (True, data['home_domain'])
+                else:
+                    self.home_domain = (False, None)
                 if 'signer_key' in data:
-                    self.signer_key = data['signer_key']
+                    self.signer_key = (True, data['signer_key'])
+                else:
+                    self.signer_key = (False, None)
                 if 'signer_weight' in data:
-                    self.signer_weight = int(data['signer_weight'])
+                    self.signer_weight = (True, int(data['signer_weight']))
+                else:
+                    self.signer_weight = (False, None)
                 if 'master_key_weight' in data:
-                    self.master_key_weight = int(data['master_key_weight'])
+                    self.master_key_weight = (True, int(data['master_key_weight']))
+                else:
+                    self.master_key_weight = (False, None)
                 if 'set_flags' in data:
-                    self.set_flags = data['set_flags']
+                    self.set_flags = (True, data['set_flags'])
+                else:
+                    self.set_flags = (False, None)
                 if 'clear_flags' in data:
-                    self.clear_flags = data['clear_flags']
+                    self.clear_flags = (True, data['clear_flags'])
+                else:
+                    self.clear_flags = (False, None)
             elif t == 6:
                 self.trustor = data['trustor']
                 self.trustee = data['trustee']
@@ -510,7 +525,7 @@ class Operations(Fetchable):
                 self.trustor = data['trustor']
                 self.trustee = data['trustee']
                 self.asset = Asset(data)
-                self.authorize = data['authorize'] == 'true'
+                self.authorize = data['authorize']
             elif t == 8:
                 self.account = data['account']
                 self.merged_to = data['into']
@@ -518,7 +533,7 @@ class Operations(Fetchable):
                 pass
             elif t == 10:
                 self.key = data['name']
-                self.value = data['value']
+                self.value = base64.b64decode(data['value'])
             else:
                 raise Exception('Unsupported operation = %s' % self.type)
 
@@ -545,7 +560,7 @@ class Operations(Fetchable):
         def __init__(self, baseurl=''):
             self.paginated = True
             self.streamed = True
-            self.url = baseurl + '/operations/'
+            self.url = baseurl + '/operations'
 
         def map2obj(self, data):
             return Operations.Operation(data)
@@ -579,7 +594,7 @@ class Payments(object):
         def __init__(self, baseurl=''):
             self.paginated = True
             self.streamed = True
-            self.url = baseurl + '/payments/'
+            self.url = baseurl + '/payments'
 
         def map2obj(self, data):
             return Payments.Payment(data)
@@ -604,8 +619,14 @@ class Effects(object):
             elif t == 5:
                 self.home_domain = data['home_domain']
             elif t == 6:
-                self.auth_required = data['auth_required_flag']
-                self.auth_revokable = data['auth_revokable_flag']
+                if 'auth_required_flag' in data:
+                    self.auth_required = (True, data['auth_required_flag'])
+                else:
+                    self.auth_required = (False, None)
+                if 'auth_revokable_flag' in data:
+                    self.auth_revokable = (True, data['auth_revokable_flag'])
+                else:
+                    self.auth_revokable = (False, None)
             elif t == 10 or t == 11 or t == 12:
                 self.weight = data['weight']
                 self.public_key = data['public_key']
@@ -639,7 +660,7 @@ class Effects(object):
         def __init__(self, baseurl=''):
             self.paginated = True
             self.streamed = True
-            self.url = baseurl + '/effects/'
+            self.url = baseurl + '/effects'
 
         def map2obj(self, data):
             return Effects.Effect(data)
@@ -664,7 +685,7 @@ class Offers(Fetchable):
         def __init__(self, baseurl=''):
             self.paginated = True
             self.streamed = False
-            self.url = baseurl + '/offers/'
+            self.url = baseurl + '/offers'
 
         def map2obj(self, data):
             return Offers.Offer(data)
@@ -712,6 +733,7 @@ class Assets(object):
             self.asset = Asset(data)
             self.paging_token = data['paging_token']
             self.num_accounts = data['num_accounts']
+            self.amount = data['amount']
             self.flags = Accounts.Flags(data['flags'])
             self.toml = data['_links']['toml']['href']
 
@@ -909,8 +931,8 @@ class NewTransaction(object):
             pathxdr += [XDR.asset_to_xdr(p)]
 
         body = Xdr.nullclass()
-        body.type = Xdr.const.PathPaymentOp
-        body.pathPaymentOp = Xdr.types.PaymentOp(
+        body.type = Xdr.const.PATH_PAYMENT
+        body.pathPaymentOp = Xdr.types.PathPaymentOp(
                 XDR.asset_to_xdr(send_asset),
                 XDR.amount_to_xdr(max_send),
                 XDR.address_to_xdr(destination),
@@ -1206,7 +1228,7 @@ def find_payment_path(from_account, to_account, to_asset, amount):
     paths from those source assets to the desired destination asset. The search’s 
     amount parameter will be used to determine if there a given path can satisfy 
     a payment of the desired amount. 
-    >>> path = stellar.find_payment_path('GAEE__ADED__', 'GDAA__3EFD__', ('USD', 'GDKG__GZ2O__'), "10.1")
+    >>> path = stellar.find_payment_path('GAEE__ADED__', 'GDAA__3EFD__', ('USD', 'GDKG__GZ2O__'), "10.1").fetch()
     """
     return PaymentPaths.All(from_account, to_account, to_asset, amount)
 

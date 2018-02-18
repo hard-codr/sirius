@@ -4,7 +4,8 @@ import base64
 import binascii
 
 from decimal import Decimal
-from stellarxdr import Xdr
+
+from .xdr import Xdr
 
 class HttpException(Exception):
     def __init__(self, msg, error=''):
@@ -104,7 +105,7 @@ class XDR(object):
 
                 xdr = Xdr.nullclass()
                 xdr.assetCode = bytearray(asset_code, 'ascii') + b'\x00' * pad_length
-                xdr.issuer = address_to_xdr(asset_issuer)
+                xdr.issuer = XDR.address_to_xdr(asset_issuer)
 
                 if code_length <= 4:
                     return Xdr.types.Asset(type=Xdr.const.ASSET_TYPE_CREDIT_ALPHANUM4, 
