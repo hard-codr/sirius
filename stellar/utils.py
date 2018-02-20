@@ -84,14 +84,17 @@ class XDR(object):
 
     #Returns signer xdr, where signer_type can be 'ed25519PublicKey', 'hashX', 'preAuthTX'
     @staticmethod
-    def signer_key_to_xdr(signer_type, signer):
+    def signer_to_xdr(signer_type, signer, weight):
+        key = None
         if signer_type == 'ed25519PublicKey':
-            return Xdr.types.SignerKey(Xdr.const.SIGNER_KEY_TYPE_ED25519, XDR.address_to_xdr(signer))
-        if signer_type == 'hashX':
-            return Xdr.types.SignerKey(Xdr.const.SIGNER_KEY_TYPE_HASH_X, hashX=signer)
-        if signer_type == 'preAuthTX':
-            return Xdr.types.SignerKey(Xdr.const.SIGNER_KEY_TYPE_PRE_AUTH_TX, preAuthTx=signer)
-        raise Exception('Unknown signer_type = %s' % signer_type)
+            key = Xdr.types.SignerKey(Xdr.const.SIGNER_KEY_TYPE_ED25519, XDR.address_to_xdr(signer))
+        elif signer_type == 'hashX':
+            key = Xdr.types.SignerKey(Xdr.const.SIGNER_KEY_TYPE_HASH_X, hashX=signer)
+        elif signer_type == 'preAuthTx':
+            key = Xdr.types.SignerKey(Xdr.const.SIGNER_KEY_TYPE_PRE_AUTH_TX, preAuthTx=signer)
+        else:
+            raise Exception('Unknown signer_type = %s' % signer_type)
+        return Xdr.types.Signer(key, weight)
 
     #Returns asset xdr given asset in tuple format (asset_code, asset_issuer) or 'native'
     @staticmethod

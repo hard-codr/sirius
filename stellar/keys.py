@@ -11,7 +11,7 @@ KEY_TYPES = {
         }
 
 def random_keypair():
-    """Generates pair of (secret,account-id) pair"""
+    """Generates pair of (secret,account-id). """
     seed = os.urandom(32)
     signing_key = ed25519.SigningKey(seed)
     verifying_key = signing_key.get_verifying_key()

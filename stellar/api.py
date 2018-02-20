@@ -919,7 +919,7 @@ class NewTransaction(object):
 
         return self
 
-    def pathpay(self, destination, dest_amount, dest_asset, send_amount, send_asset, max_send, path):
+    def pathpay(self, destination, dest_amount, dest_asset, max_send, send_asset, path):
         """Does the pathpay operation for given destination account, for dest_amount of dest_asset.
         It will send send_amount of send_asset upto max of max_send. Optionally path containing
         asset for intermediate exchanges can be specified (those path asset can be 'native' or 
@@ -948,7 +948,7 @@ class NewTransaction(object):
         sell_asset, buy_asset are asset in 'native' or tuple in format (asset_code, asset_issuer).
         price in (numerator, denominator) format. To buy 1 BTC at 100 XLM price would be (1, 100)
         """
-        return self.update_offer(self, 0, sell_amount, sell_asset, buy_asset, price)
+        return self.update_offer(0, sell_amount, sell_asset, buy_asset, price)
 
     def add_passive_offer(self, sell_amount, sell_asset, buy_asset, price):
         """Creates passive offer of sell_amount for selling asset sell_asset, to buy buy_asset at given price. 
@@ -986,7 +986,7 @@ class NewTransaction(object):
     def remove_offer(self, offer_id, sell_asset, buy_asset):
         """Removes existing offer with given offer_id of sell_asset <-> buy_asset trade
         """
-        return self.update_offer(self, offer_id, "0", sell_asset, buy_asset, (1,1))
+        return self.update_offer(offer_id, "0", sell_asset, buy_asset, (1,1))
 
     def set_inflation_destination(self, account):
         """Sets the inflation of given account (SET_OPTIONS operation)"""
@@ -1040,7 +1040,10 @@ class NewTransaction(object):
         return self
 
     def set_signer(self, signer_type, key, weight):
-        """Sets sigers of the given account (SET_OPTIONS operation)"""
+        """
+        Sets sigers of the given account (SET_OPTIONS operation).
+        signer_type in ('ed25519PublicKey','hashX','preAuthTx')
+        """
         self.set_options_op['signer'] = (signer_type, key, weight)
         return self
 	
@@ -1064,7 +1067,7 @@ class NewTransaction(object):
             signer_ = toarray(self.set_options_op, 'signer')
             if len(signer_) > 0:
                 signer_ = signer_[0]
-                signer_ = [XDR.signer_key_to_xdr(signer_[0], signer_[1]), signer_[2]]
+                signer_ = [XDR.signer_to_xdr(signer_[0], signer_[1], signer_[2])]
             home_domain_ = toarray(self.set_options_op, 'home_domain')
 
             body = Xdr.nullclass()
