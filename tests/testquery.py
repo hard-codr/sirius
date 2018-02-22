@@ -1009,6 +1009,7 @@ def test_assets_fetch():
 
 
 def test_payment_path_fetch():
+    stellar.setup_test_network()
     paypaths = {
             "_embedded": {
                 "records": [
