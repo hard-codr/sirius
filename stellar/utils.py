@@ -70,7 +70,7 @@ class XDR(object):
     def assetcode_to_xdr(asset_code):
         code_length = len(asset_code)
         pad_length = 4 - code_length if code_length <= 4 else 12 - code_length
-        asset_code = bytearray(self.code, 'ascii') + b'\x00' * pad_length
+        asset_code = bytearray(asset_code, 'ascii') + b'\x00' * pad_length
 
         xdr = Xdr.nullclass()
         if code_length <= 4:

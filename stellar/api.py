@@ -1042,7 +1042,7 @@ class NewTransaction(object):
     def set_signer(self, signer_type, key, weight):
         """
         Sets sigers of the given account (SET_OPTIONS operation).
-        signer_type in ('ed25519PublicKey','hashX','preAuthTx')
+        available signer_type are ('ed25519PublicKey','hashX','preAuthTx')
         """
         self.set_options_op['signer'] = (signer_type, key, weight)
         return self
@@ -1099,7 +1099,7 @@ class NewTransaction(object):
         """Remove trust for given asset. 
         asset is tuple in format (asset_code, asset_issuer) or 'native'.
         """
-        return create_or_update_trust(self, asset, "0")
+        return self.create_or_update_trust(asset, "0")
 
     def __perform_trust_op(self, account, asset_code, is_allow):
         body = Xdr.nullclass()
@@ -1114,11 +1114,11 @@ class NewTransaction(object):
 
     def authorize_trust(self, account, asset_code):
         """Authorize given account to perform transaction for given asset_code. """
-        return __perform_trust_op(self, account, asset_code, True)
+        return self.__perform_trust_op(account, asset_code, True)
        
     def deauthorize_trust(self, account, asset_code):
         """Deauthorize given account to perform transaction for given asset_code. """
-        return __perform_trust_op(self, account, asset_code, False)
+        return self.__perform_trust_op(account, asset_code, False)
 
     def merge_this_account_with(self, account):
         """Merges current account with input account"""
@@ -1142,7 +1142,7 @@ class NewTransaction(object):
         then updates old value with input value.
         """
         key = bytearray(key, encoding='utf-8')
-        value = [bytearray(value, 'utf-8')] if value else []
+        value = [bytearray(value, encoding='utf-8')] if value else []
 
         body = Xdr.nullclass()
         body.type = Xdr.const.MANAGE_DATA
@@ -1153,7 +1153,7 @@ class NewTransaction(object):
 
     def remove_data(self, key):
         """Removes the key value pair associated with given input key"""
-        return put_or_update_data(self, key, None)
+        return self.put_or_update_data(key, None)
 
 def account(accid):
     """Returns fetchable object to retrieve account details of the accid.
@@ -1255,9 +1255,10 @@ def new_transaction(account, signers=[], seq=None, fee=None, memo=None, time_bou
     account - can be public key or secret. If account is self signed then
     secret of the account is sufficient. Otherwise public key in account parameter
     and signers must have secrets of the necessary signers of that account.
-    seq - sequence of transaction, if not given will get last sequence and increment by one
-    fee - fee, if given, will be used instead of default fee of 100 stroops/op.
-    memo - optional text memo in string format or tuple (memo_type, memo_data) for other formats.
+    seq - sequence of transaction(int), if not given will get last sequence and increment by one
+    fee - fee(int), if given, will be used instead of default fee of 100 stroops/op.
+    memo - optional text memo in string format or tuple (memo_type, memo_data) for other formats. 
+           available other formats are ('id', 'hash', 'return')
     time_bounds - if given, upper and lower bounds for the transaction to be effective.
 
     Can be used with with-statement as follows:

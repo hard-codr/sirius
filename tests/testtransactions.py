@@ -36,6 +36,7 @@ acc = {
         "data" : {}
         }
 
+stellar.setup_test_network()
 
 def test_create_account():
     trx_env = 'AAAAAGxfNmJ5gxclDy95e+IrnQwRrW6LyjVwpoQ2iKOT684jAAAAZABlTtQAAAAZAAAAAAAAAAAAAAABAAAAAQAAAABsXzZieYMXJQ8veXviK50MEa1ui8o1cKaENoijk+vOIwAAAAAAAAAA88jvjG1RNbc8VVQSAamm6ZyXOVuv/NadBZHykX0Hk2EAAAAAO5rKAAAAAAAAAAABk+vOIwAAAEAXazw4qM/rzuDpw4+cLbuHrPhM6Ugq5FSEfRVTwHQ20baNlf2PEW+5acvXn2ntI5U2KXbUxgvUgGGs3U5rgpIO'
@@ -46,7 +47,7 @@ def test_create_account():
                 t.create_account('GDZ4R34MNVITLNZ4KVKBEANJU3UZZFZZLOX7ZVU5AWI7FEL5A6JWDM24', '100')
 
     get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
-    acc_mock.assert_called_once() 
+    acc_mock.assert_called_once()
     assert t.is_success()
     assert t.result() == ('cafebabe', '42')
 
@@ -61,7 +62,7 @@ def test_pay():
                 t.pay('GDZ4R34MNVITLNZ4KVKBEANJU3UZZFZZLOX7ZVU5AWI7FEL5A6JWDM24', '100')
 
     get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env_native })
-    acc_mock.assert_called_once() 
+    acc_mock.assert_called_once()
     assert t.is_success()
     assert t.result() == ('cafebabe', '42')
 
@@ -72,7 +73,7 @@ def test_pay():
                         asset=('CODR', 'GDUWG5CZ6YJNWOPQB33DOKWVWSNHJAWPWOUNAEBVTM7QRJ66NGFYEFAJ'))
 
     get_mock_1.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env_non_native })
-    acc_mock_1.assert_called_once() 
+    acc_mock_1.assert_called_once()
     assert t.is_success()
     assert t.result() == ('cafebabe', '42')
 
@@ -89,7 +90,7 @@ def test_path_payment():
                         path=[('INTASSET', 'GDUWG5CZ6YJNWOPQB33DOKWVWSNHJAWPWOUNAEBVTM7QRJ66NGFYEFAJ')])
 
     get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
-    acc_mock.assert_called_once() 
+    acc_mock.assert_called_once()
     assert t.is_success()
     assert t.result() == ('cafebabe', '42')
 
@@ -105,7 +106,7 @@ def test_add_offer():
                         price = (11, 1))
 
     get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
-    acc_mock.assert_called_once() 
+    acc_mock.assert_called_once()
     assert t.is_success()
     assert t.result() == ('cafebabe', '42')
 
@@ -121,7 +122,7 @@ def test_add_passive_offer():
                         price = (13, 1))
 
     get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
-    acc_mock.assert_called_once() 
+    acc_mock.assert_called_once()
     assert t.is_success()
     assert t.result() == ('cafebabe', '42')
 
@@ -137,7 +138,7 @@ def test_update_offer():
                         price = (1, 11))
 
     get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
-    acc_mock.assert_called_once() 
+    acc_mock.assert_called_once()
     assert t.is_success()
     assert t.result() == ('cafebabe', '42')
 
@@ -151,7 +152,7 @@ def test_remove_offer():
                         ('BUYA', 'GDUWG5CZ6YJNWOPQB33DOKWVWSNHJAWPWOUNAEBVTM7QRJ66NGFYEFAJ'))
 
     get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
-    acc_mock.assert_called_once() 
+    acc_mock.assert_called_once()
     assert t.is_success()
     assert t.result() == ('cafebabe', '42')
 
@@ -165,7 +166,7 @@ def test_set_inflation():
                 t.set_inflation_destination('GDUWG5CZ6YJNWOPQB33DOKWVWSNHJAWPWOUNAEBVTM7QRJ66NGFYEFAJ')
 
     get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
-    acc_mock.assert_called_once() 
+    acc_mock.assert_called_once()
     assert t.is_success()
     assert t.result() == ('cafebabe', '42')
 
@@ -178,7 +179,7 @@ def test_set_flags():
                 t.set_flags(True, True, True)
 
     get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
-    acc_mock.assert_called_once() 
+    acc_mock.assert_called_once()
     assert t.is_success()
     assert t.result() == ('cafebabe', '42')
 
@@ -191,7 +192,7 @@ def test_clear_flags():
                 t.clear_flags(True, True, True)
 
     get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
-    acc_mock.assert_called_once() 
+    acc_mock.assert_called_once()
     assert t.is_success()
     assert t.result() == ('cafebabe', '42')
 
@@ -205,7 +206,7 @@ def test_set_thresholds():
                 t.set_thresholds(43, 42, 41)
 
     get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
-    acc_mock.assert_called_once() 
+    acc_mock.assert_called_once()
     assert t.is_success()
     assert t.result() == ('cafebabe', '42')
 
@@ -218,7 +219,7 @@ def test_set_master_weight():
                 t.set_master_weight(42)
 
     get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
-    acc_mock.assert_called_once() 
+    acc_mock.assert_called_once()
     assert t.is_success()
     assert t.result() == ('cafebabe', '42')
 
@@ -231,7 +232,7 @@ def test_set_signer():
                 t.set_signer('ed25519PublicKey', 'GDUWG5CZ6YJNWOPQB33DOKWVWSNHJAWPWOUNAEBVTM7QRJ66NGFYEFAJ', 42)
 
     get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
-    acc_mock.assert_called_once() 
+    acc_mock.assert_called_once()
     assert t.is_success()
     assert t.result() == ('cafebabe', '42')
 
@@ -244,8 +245,137 @@ def test_set_home_domain():
                 t.set_home_domain('www.home-domain.com')
 
     get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
-    acc_mock.assert_called_once() 
+    acc_mock.assert_called_once()
     assert t.is_success()
     assert t.result() == ('cafebabe', '42')
 
+def test_create_or_update_trust():
+    trx_env = 'AAAAAGxfNmJ5gxclDy95e+IrnQwRrW6LyjVwpoQ2iKOT684jAAAAZABlTtQAAAAZAAAAAAAAAAAAAAABAAAAAQAAAABsXzZieYMXJQ8veXviK50MEa1ui8o1cKaENoijk+vOIwAAAAYAAAABQ09EUgAAAADpY3RZ9hLbOfAO9jcq1bSadILPs6jQEDWbPwin3mmLggAAABeDeRuAAAAAAAAAAAGT684jAAAAQHLVF151ZhD/dA4IDyQOD2IEAhYQXY9CUEPL+aMTxMZoTX71pbesCPnu+5esgPPgvAcaXLXI6AVtc8Q3EX3gdAk='
+
+    with patch.object(stellar.utils.HTTP, 'post', return_value=result) as get_mock:
+        with patch.object(stellar.utils.HTTP, 'get', return_value=acc) as acc_mock:
+            with stellar.new_transaction('SALCB22A3PL2JFI3GE62BM4S2TE64NJZP4GF2DBGPBC6QIUQ7GI7BRBN') as t:
+                t.create_or_update_trust(('CODR', 'GDUWG5CZ6YJNWOPQB33DOKWVWSNHJAWPWOUNAEBVTM7QRJ66NGFYEFAJ'), '10099')
+
+    get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
+    acc_mock.assert_called_once()
+    assert t.is_success()
+    assert t.result() == ('cafebabe', '42')
+
+def test_remove_trust():
+    trx_env = 'AAAAAGxfNmJ5gxclDy95e+IrnQwRrW6LyjVwpoQ2iKOT684jAAAAZABlTtQAAAAZAAAAAAAAAAAAAAABAAAAAQAAAABsXzZieYMXJQ8veXviK50MEa1ui8o1cKaENoijk+vOIwAAAAYAAAABQ09EUgAAAADpY3RZ9hLbOfAO9jcq1bSadILPs6jQEDWbPwin3mmLggAAAAAAAAAAAAAAAAAAAAGT684jAAAAQCXmuNo3BYyBT++wHlSikoJp5eha6m0vJC7hq2BDOJqGbNk6Y0oxRbbv3b1jvSLwqIIDm7DVvSP/AS8YUoeDBgY='
+
+    with patch.object(stellar.utils.HTTP, 'post', return_value=result) as get_mock:
+        with patch.object(stellar.utils.HTTP, 'get', return_value=acc) as acc_mock:
+            with stellar.new_transaction('SALCB22A3PL2JFI3GE62BM4S2TE64NJZP4GF2DBGPBC6QIUQ7GI7BRBN') as t:
+                t.remove_trust(('CODR', 'GDUWG5CZ6YJNWOPQB33DOKWVWSNHJAWPWOUNAEBVTM7QRJ66NGFYEFAJ'))
+
+    get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
+    acc_mock.assert_called_once()
+    assert t.is_success()
+    assert t.result() == ('cafebabe', '42')
+
+def test_authorize_trust():
+    trx_env = 'AAAAAGxfNmJ5gxclDy95e+IrnQwRrW6LyjVwpoQ2iKOT684jAAAAZABlTtQAAAAZAAAAAAAAAAAAAAABAAAAAQAAAABsXzZieYMXJQ8veXviK50MEa1ui8o1cKaENoijk+vOIwAAAAcAAAAA6WN0WfYS2znwDvY3KtW0mnSCz7Oo0BA1mz8Ip95pi4IAAAABQ09EUgAAAAEAAAAAAAAAAZPrziMAAABAl4QaeVgE2pVft3A6MAUtTdBTACiz247BSY4wFU8orFURt7X40j8TZIiXN+IH4zFtWceCgze655uE51uHcuGrCQ=='
+
+    with patch.object(stellar.utils.HTTP, 'post', return_value=result) as get_mock:
+        with patch.object(stellar.utils.HTTP, 'get', return_value=acc) as acc_mock:
+            with stellar.new_transaction('SALCB22A3PL2JFI3GE62BM4S2TE64NJZP4GF2DBGPBC6QIUQ7GI7BRBN') as t:
+                t.authorize_trust('GDUWG5CZ6YJNWOPQB33DOKWVWSNHJAWPWOUNAEBVTM7QRJ66NGFYEFAJ', 'CODR')
+
+    get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
+    acc_mock.assert_called_once()
+    assert t.is_success()
+    assert t.result() == ('cafebabe', '42')
+
+def test_deauthorize_trust():
+    trx_env = 'AAAAAGxfNmJ5gxclDy95e+IrnQwRrW6LyjVwpoQ2iKOT684jAAAAZABlTtQAAAAZAAAAAAAAAAAAAAABAAAAAQAAAABsXzZieYMXJQ8veXviK50MEa1ui8o1cKaENoijk+vOIwAAAAcAAAAA6WN0WfYS2znwDvY3KtW0mnSCz7Oo0BA1mz8Ip95pi4IAAAABQ09EUgAAAAAAAAAAAAAAAZPrziMAAABAY4XKfczup7NrjvhH/sX7IpUVXm+OcXmlRux5gEI8rwTxmLOhjxnHuPQeOvis6bfv3+Qe/lNJlUPYtZffANKxBg=='
+
+    with patch.object(stellar.utils.HTTP, 'post', return_value=result) as get_mock:
+        with patch.object(stellar.utils.HTTP, 'get', return_value=acc) as acc_mock:
+            with stellar.new_transaction('SALCB22A3PL2JFI3GE62BM4S2TE64NJZP4GF2DBGPBC6QIUQ7GI7BRBN') as t:
+                t.deauthorize_trust('GDUWG5CZ6YJNWOPQB33DOKWVWSNHJAWPWOUNAEBVTM7QRJ66NGFYEFAJ', 'CODR')
+
+    get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
+    acc_mock.assert_called_once()
+    assert t.is_success()
+    assert t.result() == ('cafebabe', '42')
+
+def test_account_merge():
+    trx_env = 'AAAAAGxfNmJ5gxclDy95e+IrnQwRrW6LyjVwpoQ2iKOT684jAAAAZABlTtQAAAAZAAAAAAAAAAAAAAABAAAAAQAAAABsXzZieYMXJQ8veXviK50MEa1ui8o1cKaENoijk+vOIwAAAAgAAAAA6WN0WfYS2znwDvY3KtW0mnSCz7Oo0BA1mz8Ip95pi4IAAAAAAAAAAZPrziMAAABAZ7IsT17C1Lm1Jfy3zHAG7Adxw+7IfICtxkMgqybiQhUt19GpkiUy/osFyuK6207U8UsdH1+09tkiUvigLQfKAg=='
+
+    with patch.object(stellar.utils.HTTP, 'post', return_value=result) as get_mock:
+        with patch.object(stellar.utils.HTTP, 'get', return_value=acc) as acc_mock:
+            with stellar.new_transaction('SALCB22A3PL2JFI3GE62BM4S2TE64NJZP4GF2DBGPBC6QIUQ7GI7BRBN') as t:
+                t.merge_this_account_with('GDUWG5CZ6YJNWOPQB33DOKWVWSNHJAWPWOUNAEBVTM7QRJ66NGFYEFAJ')
+
+    get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
+    acc_mock.assert_called_once()
+    assert t.is_success()
+    assert t.result() == ('cafebabe', '42')
+
+def test_run_inflation():
+    trx_env = 'AAAAAGxfNmJ5gxclDy95e+IrnQwRrW6LyjVwpoQ2iKOT684jAAAAZABlTtQAAAAZAAAAAAAAAAAAAAABAAAAAQAAAABsXzZieYMXJQ8veXviK50MEa1ui8o1cKaENoijk+vOIwAAAAkAAAAAAAAAAZPrziMAAABAe6CjWatnewWcnYqJoh0gYHI2PDSHL5wJ9YE99+glXLxkkwWO+KRqvRoRQJbKvr0ljwAl49wKuZmyCdyyiL8kBg=='
+
+    with patch.object(stellar.utils.HTTP, 'post', return_value=result) as get_mock:
+        with patch.object(stellar.utils.HTTP, 'get', return_value=acc) as acc_mock:
+            with stellar.new_transaction('SALCB22A3PL2JFI3GE62BM4S2TE64NJZP4GF2DBGPBC6QIUQ7GI7BRBN') as t:
+                t.run_inflation()
+
+    get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
+    acc_mock.assert_called_once()
+    assert t.is_success()
+    assert t.result() == ('cafebabe', '42')
+
+def test_put_or_update_data():
+    trx_env = 'AAAAAGxfNmJ5gxclDy95e+IrnQwRrW6LyjVwpoQ2iKOT684jAAAAZABlTtQAAAAZAAAAAAAAAAAAAAABAAAAAQAAAABsXzZieYMXJQ8veXviK50MEa1ui8o1cKaENoijk+vOIwAAAAoAAAAES0VZMQAAAAEAAAAGVkFMVUUxAAAAAAAAAAAAAZPrziMAAABAp3H8706dk0DRoRwWLwEM8B1/kXCB9L8pDnddpFJGdshp62wXU28duUAl0QfikrWd14G56G8RpSWX39wx2E7lAg=='
+
+    with patch.object(stellar.utils.HTTP, 'post', return_value=result) as get_mock:
+        with patch.object(stellar.utils.HTTP, 'get', return_value=acc) as acc_mock:
+            with stellar.new_transaction('SALCB22A3PL2JFI3GE62BM4S2TE64NJZP4GF2DBGPBC6QIUQ7GI7BRBN') as t:
+                t.put_or_update_data('KEY1', 'VALUE1')
+
+    get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
+    acc_mock.assert_called_once()
+    assert t.is_success()
+    assert t.result() == ('cafebabe', '42')
+
+def test_remove_data():
+    trx_env = 'AAAAAGxfNmJ5gxclDy95e+IrnQwRrW6LyjVwpoQ2iKOT684jAAAAZABlTtQAAAAZAAAAAAAAAAAAAAABAAAAAQAAAABsXzZieYMXJQ8veXviK50MEa1ui8o1cKaENoijk+vOIwAAAAoAAAAES0VZMQAAAAAAAAAAAAAAAZPrziMAAABAnUclm1IWlWWoUkS//5kc3zlaJIkUzybse+rPD/OwSm+PWTXxU0xsP7fRoLE+IgEDeWTvfeP0N8QVHiqT2bLcAQ=='
+
+    with patch.object(stellar.utils.HTTP, 'post', return_value=result) as get_mock:
+        with patch.object(stellar.utils.HTTP, 'get', return_value=acc) as acc_mock:
+            with stellar.new_transaction('SALCB22A3PL2JFI3GE62BM4S2TE64NJZP4GF2DBGPBC6QIUQ7GI7BRBN') as t:
+                t.remove_data('KEY1')
+
+    get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
+    acc_mock.assert_called_once()
+    assert t.is_success()
+    assert t.result() == ('cafebabe', '42')
+
+def test_trx_memo():
+    trx_env = 'AAAAAGxfNmJ5gxclDy95e+IrnQwRrW6LyjVwpoQ2iKOT684jAAAAZABlTtQAAAAZAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAABAAAACXRlc3QtbWVtbwAAAAAAAAEAAAABAAAAAGxfNmJ5gxclDy95e+IrnQwRrW6LyjVwpoQ2iKOT684jAAAAAQAAAADzyO+MbVE1tzxVVBIBqabpnJc5W6/81p0FkfKRfQeTYQAAAAAAAAAAGQixAAAAAAAAAAABk+vOIwAAAEAWa7LRE8NlmG8p90o0ZUFX3aLoNjh2x5lF048/LyzXLqgabtOO4aRYdlMCgjt/gWrQcBTvvXX13/Q+4hB8ITUI'
+    with patch.object(stellar.utils.HTTP, 'post', return_value=result) as get_mock:
+        with patch.object(stellar.utils.HTTP, 'get', return_value=acc) as acc_mock:
+            with stellar.new_transaction('SALCB22A3PL2JFI3GE62BM4S2TE64NJZP4GF2DBGPBC6QIUQ7GI7BRBN', memo='test-memo', time_bounds=[0,0]) as t:
+                t.pay('GDZ4R34MNVITLNZ4KVKBEANJU3UZZFZZLOX7ZVU5AWI7FEL5A6JWDM24', '42')
+
+    get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
+
+    trx_env = 'AAAAAGxfNmJ5gxclDy95e+IrnQwRrW6LyjVwpoQ2iKOT684jAAAAZABlTtQAAAAZAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAADFDsUlMLJEiMWE3Ak0NDxqnWEeEnoVK651cx1FKP1nTIAAAABAAAAAQAAAABsXzZieYMXJQ8veXviK50MEa1ui8o1cKaENoijk+vOIwAAAAEAAAAA88jvjG1RNbc8VVQSAamm6ZyXOVuv/NadBZHykX0Hk2EAAAAAAAAAABkIsQAAAAAAAAAAAZPrziMAAABA+fR/qdkZjNtIj021Lru4It5dLT3rgRPqOoycbrTEHArfw12UpFAzQ4pNj+b04C0Z2sh4bFfQHOYDKGzsGahsDA=='
+    with patch.object(stellar.utils.HTTP, 'post', return_value=result) as get_mock:
+        with patch.object(stellar.utils.HTTP, 'get', return_value=acc) as acc_mock:
+            with stellar.new_transaction('SALCB22A3PL2JFI3GE62BM4S2TE64NJZP4GF2DBGPBC6QIUQ7GI7BRBN', memo=('hash', '143b1494c2c9122316137024d0d0f1aa75847849e854aeb9d5cc7514a3f59d32'), time_bounds=[0,0]) as t:
+                t.pay('GDZ4R34MNVITLNZ4KVKBEANJU3UZZFZZLOX7ZVU5AWI7FEL5A6JWDM24', '42')
+
+    get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
+
+def test_trx_seq():
+    trx_env = 'AAAAAGxfNmJ5gxclDy95e+IrnQwRrW6LyjVwpoQ2iKOT684jAAAAZABlTtQAAAAeAAAAAAAAAAAAAAABAAAAAQAAAABsXzZieYMXJQ8veXviK50MEa1ui8o1cKaENoijk+vOIwAAAAEAAAAA88jvjG1RNbc8VVQSAamm6ZyXOVuv/NadBZHykX0Hk2EAAAAAAAAAABkIsQAAAAAAAAAAAZPrziMAAABASJ+nOxOuYE5gva1OsTtT+sTPQ5mWAAnmRn4kcM7DyCZRwsFR+8Guc41Pxq8zkSdqSrsU/ql0YeGrTq7QWdQ+Cg=='
+    with patch.object(stellar.utils.HTTP, 'post', return_value=result) as get_mock:
+        with patch.object(stellar.utils.HTTP, 'get', return_value=acc) as acc_mock:
+            with stellar.new_transaction('SALCB22A3PL2JFI3GE62BM4S2TE64NJZP4GF2DBGPBC6QIUQ7GI7BRBN', seq=28515645087809566) as t:
+                t.pay('GDZ4R34MNVITLNZ4KVKBEANJU3UZZFZZLOX7ZVU5AWI7FEL5A6JWDM24', '42')
+
+    get_mock.assert_called_once_with('https://horizon-testnet.stellar.org/transactions/', { 'tx' : trx_env })
 
