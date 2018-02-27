@@ -25,7 +25,7 @@ def test_network_setup():
 
 def test_shorten_address():
     address = 'GDZ4R34MNVITLNZ4KVKBEANJU3UZZFZZLOX7ZVU5AWI7FEL5A6JWDM24'
-    shortened_address = stellar.api.shorten_address(address)
+    shortened_address = stellar.api._shorten_address(address)
     assert len(shortened_address) == 10 and shortened_address.startswith(address[:4]) and\
             shortened_address.endswith(address[-4:])
 

@@ -114,8 +114,10 @@ pip install git+https://github.com/hard-codr/sirius
 ```
 
 ## Planned Features
-1. Write extensive test cases
-2. Error handling
-3. Write functions for key generation
-4. Good documentation
+1. ~~Write extensive test cases~~
+2. ~~Error handling~~
+3. ~~Write functions for key generation~~
+4. ~~Good documentation~~
 5. Lots of bug fixes
+6. Write more documentation
+7. Write integration with federation services

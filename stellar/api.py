@@ -53,16 +53,16 @@ def get_current_network():
     return (horizon, network_id)
 
 #Shortens address for display purpose
-def shorten_address(address):
+def _shorten_address(address):
     return '%s__%s' % (address[:4], address[-4:])
 
-def __get_seed_from_secret(secret):
+def _get_seed_from_secret(secret):
     decoded = base64.b32decode(secret)
     return decoded[1:-2]
 
 #Signs given trx_hash with provided secret key
-def sign_trx_hash(signer, trx_hash):
-    signing_key = ed25519.SigningKey(__get_seed_from_secret(signer))
+def _sign_trx_hash(signer, trx_hash):
+    signing_key = ed25519.SigningKey(_get_seed_from_secret(signer))
     public_key = Xdr.types.PublicKey(Xdr.const.KEY_TYPE_ED25519, 
             signing_key.get_verifying_key().to_bytes())
     signature = signing_key.sign(trx_hash)
@@ -80,6 +80,13 @@ class Asset(object):
         """
         type_key = prefix + 'asset_type' 
         self.asset_type = data[type_key]
+        '''asset type (either native, credit_alphanum4 or credit_alphanum12)'''
+        self.asset_code = None
+        '''asset code for asset'''
+        self.asset_issuer = None
+        '''asset issuer of the non-native asset'''
+        self.limit = None
+        '''limit on holding the asset if any'''
         if self.asset_type != 'native':
             self.asset_code = data[prefix + 'asset_code']
             self.asset_issuer = data[prefix + 'asset_issuer']
@@ -91,7 +98,7 @@ class Asset(object):
 
     def __repr__(self):
         return 'Asset(native)' if self.asset_type == 'native' else 'Asset(%s,%s,%s)'\
-                % (self.asset_type, self.asset_code, shorten_address(self.asset_issuer))
+                % (self.asset_type, self.asset_code, _shorten_address(self.asset_issuer))
 
     @staticmethod
     def format_url_parameters(asset, prefix=''):
@@ -122,7 +129,7 @@ class Fetchable(object):
     can be iterated.
     """
     class Page(object):
-        #XXX: Tutorial for using page
+        """Page containing records, link to next page and previous page. """
         def __init__(self, mapper, data):
             self.mapper = mapper
             self.records = [self.mapper(r) for r in data['_embedded']['records']]
@@ -159,8 +166,8 @@ class Fetchable(object):
 
         r = HTTP.get(horizon + self.url)
         if not self.paginated:
-            return self.map2obj(r)
-        return Fetchable.Page(lambda x : self.map2obj(x), r)
+            return self._map2obj(r)
+        return Fetchable.Page(lambda x : self._map2obj(x), r)
 
     def first(self):
         """Helper method for paginated query. returns first record for given paged
@@ -187,6 +194,10 @@ class Fetchable(object):
             return None
 
     def stream(self, cursor=None, limit=10, order='asc'):
+        """Returns iterable stream for the given query.
+        You can start stream from given cursor and order specified in the input.
+        Returned stream can be iterable using for-loop.
+        """
         if self.streamed:
             urlsep = '&' if self.url.find('?') >= 0 else '?' 
             if cursor:
@@ -200,11 +211,11 @@ class Fetchable(object):
             for event in eventsource:
                 if event.data == '"hello"':
                     continue
-                yield self.map2obj(json.loads(event.data))
+                yield self._map2obj(json.loads(event.data))
         else:
             raise Exception('stream not supported')
 
-    def map2obj(self, data):
+    def _map2obj(self, data):
         """Function that subclass need to implemet to convert parsed json object to
         python object, according to resource that is requested
         """
@@ -244,7 +255,7 @@ class Accounts(Fetchable):
             self.type = data['type']
 
         def __repr__(self):
-            return 'Signer(%s, %s)' % (shorten_address(self.public_key),  self.weight)
+            return 'Signer(%s, %s)' % (_shorten_address(self.public_key),  self.weight)
 
     class Data(object):
         def __init__(self, data):
@@ -255,9 +266,7 @@ class Accounts(Fetchable):
             return 'Data(%s, %s)' % (self.key, self.value)
 
     class Account(object):
-        """Account object.
-        https://www.stellar.org/developers/horizon/reference/resources/account.html
-        """
+        """Account:https://www.stellar.org/developers/horizon/reference/resources/account.html"""
         def __init__(self, data):
             """Construct Account object given data dict having all the account related field."""
             self.account_id = data['id']
@@ -285,20 +294,20 @@ class Accounts(Fetchable):
         self.streamed = False
         self.url = '/accounts/%s' % self.accid
 
-    def map2obj(self, data):
+    def _map2obj(self, data):
         return Accounts.Account(data)
 
     def transactions(self):
         """Returns fechable object for transactions associated with given account"""
-        return Transactions.All(self.url)
+        return Transactions._All(self.url)
 
     def operations(self):
         """Returns fechable object for operations associated with given account"""
-        return Operations.All(self.url)
+        return Operations._All(self.url)
 
     def payments(self):
         """Returns fechable object for payments associated with given account"""
-        return Payments.All(self.url)
+        return Payments._All(self.url)
 
     def offers(self):
         """Returns fechable object for offers associated with given account"""
@@ -306,14 +315,12 @@ class Accounts(Fetchable):
 
     def effects(self):
         """Returns fechable object for effects associated with given account"""
-        return Effects.All(self.url)
+        return Effects._All(self.url)
 
 
 class Transactions(Fetchable):
     class Transaction(object):
-        """Transactin object.
-        https://www.stellar.org/developers/horizon/reference/resources/transaction.html
-        """
+        """Transactin: https://www.stellar.org/developers/horizon/reference/resources/transaction.html"""
         def __init__(self, data):
             self.trxid = data['id']
             self.paging_token = data['paging_token']
@@ -338,7 +345,7 @@ class Transactions(Fetchable):
 
         def __repr__(self):
             return 'Transaction(id=%s,ledger=%s,account=%s,seq=%s)' % (self.trxid,\
-                    self.ledger, shorten_address(self.account), self.account_seq)
+                    self.ledger, _shorten_address(self.account), self.account_seq)
 
     def __init__(self, trxid):
         if not trxid:
@@ -348,36 +355,34 @@ class Transactions(Fetchable):
         self.streamed = False
         self.url = '/transactions/%s' % self.trxid
 
-    def map2obj(self, data):
+    def _map2obj(self, data):
         return Transactions.Transaction(data)
 
     def operations(self):
         """Returns fechable object for operations associated with given transaction"""
-        return Operations.All(self.url)
+        return Operations._All(self.url)
 
     def payments(self):
         """Returns fechable object for payments associated with given transaction"""
-        return Payments.All(self.url)
+        return Payments._All(self.url)
 
     def effects(self):
         """Returns fechable object for effects associated with given transaction"""
-        return Effects.All(self.url)
+        return Effects._All(self.url)
 
-    class All(Fetchable):
+    class _All(Fetchable):
         def __init__(self, baseurl=''):
             self.paginated = True
             self.streamed = True
             self.url = baseurl + '/transactions'
 
-        def map2obj(self, data):
+        def _map2obj(self, data):
             return Transactions.Transaction(data)
 
 
 class Ledgers(Fetchable):
     class Ledger(object):
-        """Ledger object
-        https://www.stellar.org/developers/horizon/reference/resources/ledger.html
-        """
+        """Ledger: https://www.stellar.org/developers/horizon/reference/resources/ledger.html"""
         def __init__(self, data):
             self.ledid = data['id']
             self.paging_token = data['paging_token']
@@ -405,40 +410,38 @@ class Ledgers(Fetchable):
         self.streamed = False
         self.url = '/ledgers/%s' % self.ledseq
 
-    def map2obj(self, data):
+    def _map2obj(self, data):
         return Ledgers.Ledger(data)
 
     def transactions(self):
         """Returns fechable object for transactions associated with given ledger"""
-        return Transactions.All(self.url)
+        return Transactions._All(self.url)
 
     def operations(self):
         """Returns fechable object for operations associated with given ledger"""
-        return Operations.All(self.url)
+        return Operations._All(self.url)
 
     def payments(self):
         """Returns fechable object for payments associated with given ledger"""
-        return Payments.All(self.url)
+        return Payments._All(self.url)
 
     def effects(self):
         """Returns fechable object for effects associated with given ledger"""
-        return Effects.All(self.url)
+        return Effects._All(self.url)
 
-    class All(Fetchable):
+    class _All(Fetchable):
         def __init__(self, baseurl=''):
             self.paginated = True
             self.streamed = True
             self.url = baseurl + '/ledgers'
 
-        def map2obj(self, data):
+        def _map2obj(self, data):
             return Ledgers.Ledger(data)
 
 
 class Operations(Fetchable):
     class Operation(object):
-        """Operation object
-        https://www.stellar.org/developers/horizon/reference/resources/operation.html
-        """
+        """Operation: https://www.stellar.org/developers/horizon/reference/resources/operation.html"""
         def __init__(self, data):
             self.opid = data['id']
             self.paging_token = data['paging_token']
@@ -539,7 +542,7 @@ class Operations(Fetchable):
 
         def __repr__(self):
             return 'Operation(id=%s,account=%s,type=%s)' %\
-                    (self.opid, shorten_address(self.source_account), self.type)
+                    (self.opid, _shorten_address(self.source_account), self.type)
 
     def __init__(self, opid):
         if not opid:
@@ -549,20 +552,20 @@ class Operations(Fetchable):
         self.streamed = False
         self.url = '/operations/%s' % self.opid
 
-    def map2obj(self, data):
+    def _map2obj(self, data):
             return Operations.Operation(data)
 
     def effects(self):
         """Returns fechable object for effects associated with given operation"""
-        return Effects.All(self.url)
+        return Effects._All(self.url)
 
-    class All(Fetchable):
+    class _All(Fetchable):
         def __init__(self, baseurl=''):
             self.paginated = True
             self.streamed = True
             self.url = baseurl + '/operations'
 
-        def map2obj(self, data):
+        def _map2obj(self, data):
             return Operations.Operation(data)
 
 class Payments(object):
@@ -587,16 +590,16 @@ class Payments(object):
 
         def __repr__(self):
             return 'Payment(%s,from=%s,to=%s,amount=%s,asset=%s)' %\
-                    (self.type, shorten_address(self.source_account),\
-                    shorten_address(self.destination), self.amount, self.asset)
+                    (self.type, _shorten_address(self.source_account),\
+                    _shorten_address(self.destination), self.amount, self.asset)
 
-    class All(Fetchable):
+    class _All(Fetchable):
         def __init__(self, baseurl=''):
             self.paginated = True
             self.streamed = True
             self.url = baseurl + '/payments'
 
-        def map2obj(self, data):
+        def _map2obj(self, data):
             return Payments.Payment(data)
 
 class Effects(object):
@@ -653,16 +656,16 @@ class Effects(object):
 
         def __repr__(self):
             return 'Effect(%s,%s,%s)' % (self.effectid,\
-                    shorten_address(self.account), self.type)
+                    _shorten_address(self.account), self.type)
 
 
-    class All(Fetchable):
+    class _All(Fetchable):
         def __init__(self, baseurl=''):
             self.paginated = True
             self.streamed = True
             self.url = baseurl + '/effects'
 
-        def map2obj(self, data):
+        def _map2obj(self, data):
             return Effects.Effect(data)
 
 class Offers(Fetchable):
@@ -678,7 +681,7 @@ class Offers(Fetchable):
             self.price = data['price']
 
         def __repr__(self):
-            return 'Offer(%s,%s,%s,%s)' % (self.offerid, shorten_address(self.seller),\
+            return 'Offer(%s,%s,%s,%s)' % (self.offerid, _shorten_address(self.seller),\
                     self.selling.asset_code, self.buying.asset_code)
 
     class __All(Fetchable):
@@ -687,7 +690,7 @@ class Offers(Fetchable):
             self.streamed = False
             self.url = baseurl + '/offers'
 
-        def map2obj(self, data):
+        def _map2obj(self, data):
             return Offers.Offer(data)
 
         def stream(self):
@@ -716,7 +719,7 @@ class Orderbooks(object):
         def __repr__(self):
             return 'Orderbook(base=%s,counter=%s)' % (self.base_asset, self.counter_asset)
 
-    class All(Fetchable):
+    class _All(Fetchable):
         def __init__(self, selling, buying):
             self.paginated = False
             self.streamed = False
@@ -724,7 +727,7 @@ class Orderbooks(object):
                     (Asset.format_url_parameters(selling, 'selling_'), 
                             Asset.format_url_parameters(buying, 'buying_'))
 
-        def map2obj(self, data):
+        def _map2obj(self, data):
             return Orderbooks.Orderbook(data)
 
 class Assets(object):
@@ -740,7 +743,7 @@ class Assets(object):
         def __repr__(self):
             return str(self.asset)
 
-    class All(Fetchable):
+    class _All(Fetchable):
         def __init__(self, asset_code, asset_issuer):
             self.paginated = True
             self.streamed = False
@@ -751,7 +754,7 @@ class Assets(object):
                 self.url = '%sasset_issuer=%s&' % (self.url, asset_issuer)
             self.url = self.url[:-1]
 
-        def map2obj(self, data):
+        def _map2obj(self, data):
             return Assets.AssetDetails(data)
 
 class PaymentPaths(object):
@@ -778,7 +781,7 @@ class PaymentPaths(object):
     def __init__(self, data):
         self.records = [PaymentPaths.PaymentPath(r) for r in data['_embedded']['records']]
 
-    class All(Fetchable):
+    class _All(Fetchable):
         def __init__(self, from_account, to_account, to_asset, amount):
             self.paginated = False
             self.streamed = False
@@ -786,18 +789,24 @@ class PaymentPaths(object):
                     % (from_account, to_account,
                             Asset.format_url_parameters(to_asset, 'destination_'), amount)
 
-        def map2obj(self, data):
+        def _map2obj(self, data):
             return PaymentPaths(data)
 
 class NewTransaction(object):
     def __init__(self, account, signers, seq, fee, memo, time_bounds):
         self.account = account
+        '''account on which transaction will be executed'''
         self.signers = signers
+        '''signers of the transaction. if account is not secret, key then signers must be provided'''
         self.seq = seq
+        '''sequence of the transaction'''
         self.fee = fee
+        '''fee for the transaction'''
         self.memo = memo
+        '''memo of the transaction'''
         self.time_bounds = time_bounds
         self.ops = []
+        '''operations in transaction'''
         self.set_options_op = {}
 
         if len(signers) == 0 and account.startswith('G'):
@@ -846,7 +855,7 @@ class NewTransaction(object):
 
         signatures = []
         for signer in self.signers:
-            signatures += [sign_trx_hash(signer, trx_hash)]
+            signatures += [_sign_trx_hash(signer, trx_hash)]
 
         tre = Xdr.types.TransactionEnvelope(trxxdr, signatures)
 
@@ -1156,7 +1165,7 @@ class NewTransaction(object):
         return self.put_or_update_data(key, None)
 
 def account(accid):
-    """Returns fetchable object to retrieve account details of the accid.
+    """Returns Fetchable object to retrieve account details of the accid.
     You can chain other operations e.g. stellar.account(accid).operations() 
     to retrieve operations of the given account.
     >>> a = stellar.account('GAEE..IB4V..').fetch() 
@@ -1168,7 +1177,7 @@ def transactions():
     """Returns transactions thats are being submitted to stellar network.
     >>> ts = stellar.transactions().fetch(limit=5, order='desc').entries()
     """
-    return Transactions.All()
+    return Transactions._All()
 
 def transaction(trxid):
     """Returns single transaction with given trxid. Can be chained to retrieve
@@ -1183,7 +1192,7 @@ def ledgers():
     """Returns ledgers that are being processed be stellar network.
     >>> ls = stellar.ledgers().fetch(cursor=15, order='asc').entries()
     """
-    return Ledgers.All()
+    return Ledgers._All()
 
 def ledger(ledseq):
     """Returns single ledger with given ledseq. Can be chained to retreive other
@@ -1196,13 +1205,13 @@ def effects():
     """Returns all the effets that are being performed on stellar network.
     >>> es = stellar.effects().fetch()
     """
-    return Effects.All()
+    return Effects._All()
 
 def operations():
     """Returns all the operaion that are being performed on stellar network.
     >>> ops = stellar.operations().fetch(limit=5, order='desc')
     """
-    return Operations.All()
+    return Operations._All()
 
 def operation(opid):
     """Returns single opreation with given opid.
@@ -1215,7 +1224,7 @@ def payments():
     """Returns all the payment operation that are done on stellar network
     >>> ps = stellar.payments().fetch().entries()
     """
-    return Payments.All()
+    return Payments._All()
 
 def trades(buying, selling):
     """Returns all the trade where buying <-> selling assets are being traded.
@@ -1233,14 +1242,14 @@ def find_payment_path(from_account, to_account, to_asset, amount):
     a payment of the desired amount. 
     >>> path = stellar.find_payment_path('GAEE__ADED__', 'GDAA__3EFD__', ('USD', 'GDKG__GZ2O__'), "10.1").fetch()
     """
-    return PaymentPaths.All(from_account, to_account, to_asset, amount)
+    return PaymentPaths._All(from_account, to_account, to_asset, amount)
 
 def assets(asset_code=None, asset_issuer=None):
     """Returns all the assets. Optionally assets can be filtered based on asset_code
     or asset_issuer.
     >>> usds = stellar.assets(asset_code='USD').fetch().entries()
     """
-    return Assets.All(asset_code, asset_issuer)
+    return Assets._All(asset_code, asset_issuer)
 
 def orderbook(buying, selling):
     """All the pending offers where people are 'buying' asset in exchange of
@@ -1248,7 +1257,7 @@ def orderbook(buying, selling):
     >>> book = stellar.orderbook(selling=('AST1', 'GAEE__ADED__'), 
     ...         buying=('AST2', 'GDAA__3EFD__')).fetch().entries()
     """
-    return Orderbooks.All(buying, selling)
+    return Orderbooks._All(buying, selling)
 
 def new_transaction(account, signers=[], seq=None, fee=None, memo=None, time_bounds=[]):
     """Creates new transaction.
