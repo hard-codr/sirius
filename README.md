@@ -22,6 +22,9 @@ Account(id=GAEE..IB4V..,seq=28515937145585674,balances=[Balance(9855.9998800 XLM
 
 ```
 
+## Documentation
+Pydoc generated documentation can be found at https://hard-codr.github.io/sirius .
+
 ##  Why so Sirius?
 Sirius is inspired by very well designed 'requests' HTTP library. Following
 are some of the reason I created this library.
