@@ -173,7 +173,8 @@ class Fetchable(object):
         """Helper method for paginated query. returns first record for given paged
         resource or None if thier are not records for given query. 
         e.g. to fetch first transaction:
-        >>> stellar.transactions().first()
+
+            >>> stellar.transactions().first()
         """
         r = self.fetch(limit=1, order='asc').records
         if len(r) > 0:
@@ -185,7 +186,8 @@ class Fetchable(object):
         """Helper method for paginated query. returns last record for given paged
         resource or None if thier are not records for given query.
         e.g. to fetch last transaction:
-        >>> stellar.transactions().last()
+
+            >>> stellar.transactions().last()
         """
         r = self.fetch(limit=1, order='desc').records
         if len(r) > 0:
@@ -1165,64 +1167,94 @@ class NewTransaction(object):
         return self.put_or_update_data(key, None)
 
 def account(accid):
-    """Returns Fetchable object to retrieve account details of the accid.
+    """
+    Returns Fetchable object to retrieve account details of the accid.
     You can chain other operations e.g. stellar.account(accid).operations() 
     to retrieve operations of the given account.
-    >>> a = stellar.account('GAEE..IB4V..').fetch() 
-    >>> a_ops = stellar.account('GAEE..IB4V..').operations().fetch().entries() 
+
+        a = stellar.account('GAEE..IB4V..').fetch() 
+        a_ops = stellar.account('GAEE..IB4V..').
+                    operations().fetch().entries() 
     """
     return Accounts(accid)
 
 def transactions():
-    """Returns transactions thats are being submitted to stellar network.
-    >>> ts = stellar.transactions().fetch(limit=5, order='desc').entries()
+    """
+    Returns transactions thats are being submitted 
+    to stellar network.
+
+        ts = stellar.transactions().fetch(
+                    limit=5, order='desc').entries()
     """
     return Transactions._All()
 
 def transaction(trxid):
-    """Returns single transaction with given trxid. Can be chained to retrieve
+    """
+    Returns single transaction with given trxid. Can be chained to retrieve
     other details of the given transactions such as all operations in given
     transaction etc.
-    >>> t = stellar.transaction('aefe__b781__').fetch()
-    >>> t_ops = stellar.transaction('aefe__b781__').operations().fetch().entries()
+
+        t = stellar.transaction('aefe__b781__').fetch()
+        t_ops = stellar.transaction('aefe__b781__')
+                    .operations().fetch().entries()
     """
     return Transactions(trxid)
 
 def ledgers():
-    """Returns ledgers that are being processed be stellar network.
-    >>> ls = stellar.ledgers().fetch(cursor=15, order='asc').entries()
+    """
+    Returns ledgers that are being processed be 
+    on stellar network.
+
+        ls = stellar.ledgers().fetch(
+                        cursor=15, order='asc').entries()
     """
     return Ledgers._All()
 
 def ledger(ledseq):
-    """Returns single ledger with given ledseq. Can be chained to retreive other
+    """
+    Returns single ledger with given ledseq. Can be chained to retreive other
     details such as transactions that are part of given ledger.
-    >>> l = stellar.ledger(12345).fetch()
+
+        l = stellar.ledger(12345).fetch()
     """
     return Ledgers(ledseq);
 
 def effects():
-    """Returns all the effets that are being performed on stellar network.
-    >>> es = stellar.effects().fetch()
+    """
+    Returns all the effets that are being performed 
+    on stellar network.
+
+        es = stellar.effects().fetch()
     """
     return Effects._All()
 
 def operations():
-    """Returns all the operaion that are being performed on stellar network.
-    >>> ops = stellar.operations().fetch(limit=5, order='desc')
+    """
+    Returns all the operaion that are being performed 
+    on stellar network.
+
+        ops = stellar.operations().fetch(
+                        limit=5, order='desc')
     """
     return Operations._All()
 
 def operation(opid):
-    """Returns single opreation with given opid.
-    >>> o = stellar.operation('28551568194277377').fetch()
-    >>> o_effs = stellar.operation('28551568194277377').effects().fetch().entries()
+    """
+    Returns single opreation with given opid
+    to be fetched from stellar network.
+
+        o = stellar.operation('28551568194277377').fetch()
+        o_effs = stellar.operation('28551568194277377').
+                    effects().fetch().entries()
     """
     return Operations(opid);
 
 def payments():
-    """Returns all the payment operation that are done on stellar network
-    >>> ps = stellar.payments().fetch().entries()
+    """
+    Returns all the payment operation that are done 
+    on stellar network.
+
+        ps = stellar.payments().fetch().entries()
     """
     return Payments._All()
 
@@ -1233,34 +1265,43 @@ def trades(buying, selling):
     raise NotImplementedError
 
 def find_payment_path(from_account, to_account, to_asset, amount):
-    """ A path payment specifies a series of assets to route a payment through
+    """
+    A path payment specifies a series of assets to route a payment through
     from source asset (the asset debited from the payer) to destination asset 
     (the asset credited to the payee). As part of the search, horizon will load
     a list of assets available to the source account id and will find any payment 
     paths from those source assets to the desired destination asset. The search’s 
     amount parameter will be used to determine if there a given path can satisfy 
     a payment of the desired amount. 
-    >>> path = stellar.find_payment_path('GAEE__ADED__', 'GDAA__3EFD__', ('USD', 'GDKG__GZ2O__'), "10.1").fetch()
+
+        path = stellar.find_payment_path('GAEE__ADED__',
+                'GDAA__3EFD__', ('USD', 'GDKG__GZ2O__'),
+                "10.1").fetch()
     """
     return PaymentPaths._All(from_account, to_account, to_asset, amount)
 
 def assets(asset_code=None, asset_issuer=None):
-    """Returns all the assets. Optionally assets can be filtered based on asset_code
+    """
+    Returns all the assets. Optionally assets can be filtered based on asset_code
     or asset_issuer.
-    >>> usds = stellar.assets(asset_code='USD').fetch().entries()
+
+        usds = stellar.assets(asset_code='USD').fetch().entries()
     """
     return Assets._All(asset_code, asset_issuer)
 
 def orderbook(buying, selling):
-    """All the pending offers where people are 'buying' asset in exchange of
+    """
+    All the pending offers where people are 'buying' asset in exchange of
     'selling' asset.
-    >>> book = stellar.orderbook(selling=('AST1', 'GAEE__ADED__'), 
-    ...         buying=('AST2', 'GDAA__3EFD__')).fetch().entries()
+
+        book = stellar.orderbook(selling=('AST1', 'GAEE__ADED__'),
+                buying=('AST2', 'GDAA__3EFD__')).fetch().entries()
     """
     return Orderbooks._All(buying, selling)
 
 def new_transaction(account, signers=[], seq=None, fee=None, memo=None, time_bounds=[]):
-    """Creates new transaction.
+    """
+    Creates new transaction.
     account - can be public key or secret. If account is self signed then
     secret of the account is sufficient. Otherwise public key in account parameter
     and signers must have secrets of the necessary signers of that account.
@@ -1271,9 +1312,11 @@ def new_transaction(account, signers=[], seq=None, fee=None, memo=None, time_bou
     time_bounds - if given, upper and lower bounds for the transaction to be effective.
 
     Can be used with with-statement as follows:
-    >>> with new_transaction(account, memo='double payment') as t:
-    ...     t.pay(destination1, amount1)
-    ...     t.pay(destination2, amount2)
+
+        with new_transaction(account, memo='double payment') as t:
+            t.pay(destination1, amount1)
+            t.pay(destination2, amount2)
+
     This will autmoatically submit the transaction when with-statement completes.
 
     Each operation in transaction costs atleast a base fee (which is 100 stroops).
