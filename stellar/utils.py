@@ -152,3 +152,38 @@ class XDR(object):
     def time_bounds_to_xdr(time_bounds):
         return Xdr.types.TimeBounds(time_bounds[0], time_bounds[1])
 
+
+class FED(object):
+    """
+    Class containing utility methods for federation services.
+    """
+    @staticmethod
+    def resolve_to_account(fed_addr):
+        """
+        Resolves given federation address to stellar account id.
+        Federation address is in ```name*domain.com``` format.
+        Refer 'https://www.stellar.org/developers/guides/concepts/federation.html'
+        """
+        if '*' not in fed_addr:
+            raise Exception('Not valid federation address %s' % fed_addr)
+
+        name, domain = fed_addr.split('*')
+        toml_addr = 'https://%s/.well-known/stellar.toml' % domain
+
+        r = requests.get(toml_addr)
+        if r.status_code != 200:
+            raise HttpException('toml file not found', r.status_code)
+
+        federation = None
+        for line in r.iter_lines():
+            k, v = line.split('=')
+            if k.strip() == 'FEDERATION_SERVER':
+                federation = v.strip()[1:-1]
+        if not federation:
+            raise Exception('Federation not supported at domain %s' % domain)
+
+        r = requests.get('%s?q=%s&type=name' % (federation, fed_addr))
+        if r.status_code != 200:
+            raise HttpException('Lookup query failed for url %s' % r.url, r.status_code)
+
+        return r.json()['account_id']

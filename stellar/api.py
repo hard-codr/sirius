@@ -11,7 +11,7 @@ import hashlib
 import struct
 
 from .xdr import Xdr
-from .utils import HTTP, XDR
+from .utils import HTTP, XDR, FED
 from .keys import account_from_secret
 
 HORIZON_PUBLIC_ENDPOINT = 'https://horizon.stellar.org'
@@ -68,6 +68,12 @@ def _sign_trx_hash(signer, trx_hash):
     signature = signing_key.sign(trx_hash)
     hint = bytes(public_key.ed25519[-4:])
     return Xdr.types.DecoratedSignature(hint, signature)    
+
+#if input is federation address resolve it to account-id
+def _address_to_account(address):
+    if '*' in address:
+        return FED.resolve_to_account(address)
+    return address
 
 class Asset(object):
     """ Asset represents either stellar native asset or asset code with given issuer """
@@ -291,7 +297,7 @@ class Accounts(Fetchable):
     def __init__(self, accid):
         if not accid:
             raise ValueError('accid expected')
-        self.accid = accid
+        self.accid = _address_to_account(accid)
         self.paginated = False
         self.streamed = False
         self.url = '/accounts/%s' % self.accid
@@ -819,6 +825,8 @@ class NewTransaction(object):
         if self.account.startswith('S'):
             self.account = account_from_secret(account)
 
+        self.account = _address_to_account(self.account)
+
     def __enter__(self):
         return self
 	
@@ -907,6 +915,8 @@ class NewTransaction(object):
     def create_account(self, account, starting_balance):
         """Creates account with given starting balance
         """
+        account = _address_to_account(account)
+
         body = Xdr.nullclass()
         body.type = Xdr.const.CREATE_ACCOUNT
         body.createAccountOp = Xdr.types.CreateAccountOp(
@@ -920,6 +930,8 @@ class NewTransaction(object):
         """Pays given account with given amount of specified asset.
         asset can be 'native' or tuple in format (asset_code, asset_issuer).
         """
+        account = _address_to_account(account)
+
         body = Xdr.nullclass()
         body.type = Xdr.const.PAYMENT
         body.paymentOp = Xdr.types.PaymentOp(
@@ -936,6 +948,8 @@ class NewTransaction(object):
         asset for intermediate exchanges can be specified (those path asset can be 'native' or 
         tuple in format (asset_code, asset_issuer).
         """
+        destination = _address_to_account(destination)
+
         pathxdr = []
         #XXX is this tested?
         for p in path:
@@ -1125,14 +1139,20 @@ class NewTransaction(object):
 
     def authorize_trust(self, account, asset_code):
         """Authorize given account to perform transaction for given asset_code. """
+        account = _address_to_account(account)
+
         return self.__perform_trust_op(account, asset_code, True)
        
     def deauthorize_trust(self, account, asset_code):
         """Deauthorize given account to perform transaction for given asset_code. """
+        account = _address_to_account(account)
+
         return self.__perform_trust_op(account, asset_code, False)
 
     def merge_this_account_with(self, account):
         """Merges current account with input account"""
+        account = _address_to_account(account)
+
         body = Xdr.nullclass()
         body.type = Xdr.const.ACCOUNT_MERGE
         body.destination = XDR.address_to_xdr(account)
