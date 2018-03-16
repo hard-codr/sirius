@@ -1015,7 +1015,7 @@ class NewTransaction(object):
 
     def set_inflation_destination(self, account):
         """Sets the inflation of given account (SET_OPTIONS operation)"""
-        self.set_options_op['inflation'] = account
+        self.set_options_op['inflation'] = _address_to_account(account)
 
         return self
 
