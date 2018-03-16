@@ -104,6 +104,21 @@ else:
     print trx.errors()
 ```
 
+Sirius also support federated address as the account-id; so you can do:
+```python
+account_seed = "SCVLSUGYEAUC4MVWJORB63JBMY2CEX6ATTJ5MXTENGD3IELUQF4F6HUB"
+usd_issuer = "GDUWG5CZ6YJNWOPQB33DOKWVWSNHJAWPWOUNAEBVTM7QRJ66NGFYEFAJ"
+
+trx = stellar.new_transaction(account_seed, 'test-pay')
+                .pay('jed*stellar.org', "10.01") # address in name*domain.com format
+                .pay('fred@gmail.com*stellar.org', "42.42", asset=('USD', usd_issuer)) #or email*domain.com format
+                .submit()
+if trx.is_success():
+    print trx.result()
+else:
+    print trx.errors()
+```
+
 ### Ease of use
 Some of the stellar APIs are confusing to use.  For example, to add offer and to 
 remove offer there is the same API, i.e. MANAGE_OFFER with special meaning to the 
@@ -123,4 +138,4 @@ pip install git+https://github.com/hard-codr/sirius
 4. ~~Good documentation~~
 5. Lots of bug fixes
 6. Write more documentation
-7. Write integration with federation services
+7. ~~Write integration with federation services~~
