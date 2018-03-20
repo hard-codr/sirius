@@ -1057,6 +1057,7 @@ table {
     <li class="mono"><a href="#stellar.operations">operations</a></li>
     <li class="mono"><a href="#stellar.orderbook">orderbook</a></li>
     <li class="mono"><a href="#stellar.payments">payments</a></li>
+    <li class="mono"><a href="#stellar.post_transaction">post_transaction</a></li>
     <li class="mono"><a href="#stellar.random_keypair">random_keypair</a></li>
     <li class="mono"><a href="#stellar.setup_custom_network">setup_custom_network</a></li>
     <li class="mono"><a href="#stellar.setup_public_network">setup_public_network</a></li>
@@ -1144,6 +1145,7 @@ table {
     <li class="mono"><a href="#stellar.NewTransaction.add_offer">add_offer</a></li>
     <li class="mono"><a href="#stellar.NewTransaction.add_passive_offer">add_passive_offer</a></li>
     <li class="mono"><a href="#stellar.NewTransaction.authorize_trust">authorize_trust</a></li>
+    <li class="mono"><a href="#stellar.NewTransaction.build">build</a></li>
     <li class="mono"><a href="#stellar.NewTransaction.clear_flags">clear_flags</a></li>
     <li class="mono"><a href="#stellar.NewTransaction.create_account">create_account</a></li>
     <li class="mono"><a href="#stellar.NewTransaction.create_or_update_trust">create_or_update_trust</a></li>
@@ -1255,7 +1257,7 @@ table {
         <span class="s1">&#39;account&#39;</span><span class="p">,</span> <span class="s1">&#39;transaction&#39;</span><span class="p">,</span> <span class="s1">&#39;ledger&#39;</span><span class="p">,</span> <span class="s1">&#39;operation&#39;</span><span class="p">,</span>
         <span class="s1">&#39;transactions&#39;</span><span class="p">,</span> <span class="s1">&#39;ledgers&#39;</span><span class="p">,</span> <span class="s1">&#39;effects&#39;</span><span class="p">,</span> <span class="s1">&#39;operations&#39;</span><span class="p">,</span> <span class="s1">&#39;payments&#39;</span><span class="p">,</span>
         <span class="s1">&#39;find_payment_path&#39;</span><span class="p">,</span> <span class="s1">&#39;assets&#39;</span><span class="p">,</span> <span class="s1">&#39;trades&#39;</span><span class="p">,</span> <span class="s1">&#39;orderbook&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;new_transaction&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;new_transaction&#39;</span><span class="p">,</span> <span class="s1">&#39;post_transaction&#39;</span><span class="p">,</span>
         <span class="s1">&#39;Fetchable&#39;</span><span class="p">,</span> <span class="s1">&#39;NewTransaction&#39;</span><span class="p">,</span>
         <span class="s1">&#39;Asset&#39;</span><span class="p">,</span> <span class="s1">&#39;Accounts&#39;</span><span class="p">,</span> <span class="s1">&#39;Transactions&#39;</span><span class="p">,</span> <span class="s1">&#39;Ledgers&#39;</span><span class="p">,</span> <span class="s1">&#39;Operations&#39;</span><span class="p">,</span> <span class="s1">&#39;Payments&#39;</span><span class="p">,</span>
         <span class="s1">&#39;Effects&#39;</span><span class="p">,</span> <span class="s1">&#39;Offers&#39;</span><span class="p">,</span> <span class="s1">&#39;Orderbooks&#39;</span><span class="p">,</span> <span class="s1">&#39;Assets&#39;</span><span class="p">,</span> <span class="s1">&#39;PaymentPaths&#39;</span><span class="p">,</span>
@@ -1266,7 +1268,7 @@ table {
 <span class="kn">from</span> <span class="nn">.api</span> <span class="kn">import</span> <span class="n">account</span><span class="p">,</span> <span class="n">transaction</span><span class="p">,</span> <span class="n">ledger</span><span class="p">,</span> <span class="n">operation</span>
 <span class="kn">from</span> <span class="nn">.api</span> <span class="kn">import</span> <span class="n">transactions</span><span class="p">,</span> <span class="n">ledgers</span><span class="p">,</span> <span class="n">effects</span><span class="p">,</span> <span class="n">operations</span><span class="p">,</span> <span class="n">payments</span>
 <span class="kn">from</span> <span class="nn">.api</span> <span class="kn">import</span> <span class="n">find_payment_path</span><span class="p">,</span> <span class="n">assets</span><span class="p">,</span> <span class="n">trades</span><span class="p">,</span> <span class="n">orderbook</span>
-<span class="kn">from</span> <span class="nn">.api</span> <span class="kn">import</span> <span class="n">new_transaction</span>
+<span class="kn">from</span> <span class="nn">.api</span> <span class="kn">import</span> <span class="n">new_transaction</span><span class="p">,</span> <span class="n">post_transaction</span>
 <span class="kn">from</span> <span class="nn">.api</span> <span class="kn">import</span> <span class="n">Fetchable</span><span class="p">,</span> <span class="n">NewTransaction</span>
 <span class="kn">from</span> <span class="nn">.api</span> <span class="kn">import</span> <span class="n">Asset</span><span class="p">,</span> <span class="n">Accounts</span><span class="p">,</span> <span class="n">Transactions</span><span class="p">,</span> <span class="n">Ledgers</span><span class="p">,</span> <span class="n">Operations</span><span class="p">,</span> <span class="n">Payments</span>
 <span class="kn">from</span> <span class="nn">.api</span> <span class="kn">import</span> <span class="n">Effects</span><span class="p">,</span> <span class="n">Offers</span><span class="p">,</span> <span class="n">Orderbooks</span><span class="p">,</span> <span class="n">Assets</span><span class="p">,</span> <span class="n">PaymentPaths</span>
@@ -1573,13 +1575,23 @@ memo - optional text memo in string format or tuple (memo_type, memo_data) for o
        available other formats are ('id', 'hash', 'return')
 time_bounds - if given, upper and lower bounds for the transaction to be effective.</p>
 <p>Can be used with with-statement as follows:</p>
-<div class="codehilite"><pre><span></span>with new_transaction(account, memo=&#39;double payment&#39;) as t:
+<div class="codehilite"><pre><span></span>with stellar.new_transaction(account, memo=&#39;double payment&#39;) as t:
     t.pay(destination1, amount1)
     t.pay(destination2, amount2)
 </pre></div>
 
 
 <p>This will autmoatically submit the transaction when with-statement completes.</p>
+<p>You can prepare transaction in xdr format and then submit this prepared transaction
+(as required in smart contracts) at some later time:</p>
+<div class="codehilite"><pre><span></span>trx = stellar.new_transaction(account,
+        time_bounds=(some_future_time,0))
+        .pay(dest, amount).build()
+#at some_future_time submit the transaction envelope
+result = stellar.post_transaction(trx)
+</pre></div>
+
+
 <p>Each operation in transaction costs atleast a base fee (which is 100 stroops).
 So if you submit 5 different operations in single transaction it will cost you
 atleast 500 stroops. Only exception are set_options operation. So if you 
@@ -1602,11 +1614,20 @@ cost you 100 stroops.</p></div>
 
 <span class="sd">    Can be used with with-statement as follows:</span>
 
-<span class="sd">        with new_transaction(account, memo=&#39;double payment&#39;) as t:</span>
+<span class="sd">        with stellar.new_transaction(account, memo=&#39;double payment&#39;) as t:</span>
 <span class="sd">            t.pay(destination1, amount1)</span>
 <span class="sd">            t.pay(destination2, amount2)</span>
 
 <span class="sd">    This will autmoatically submit the transaction when with-statement completes.</span>
+
+<span class="sd">    You can prepare transaction in xdr format and then submit this prepared transaction</span>
+<span class="sd">    (as required in smart contracts) at some later time:</span>
+
+<span class="sd">        trx = stellar.new_transaction(account,</span>
+<span class="sd">                time_bounds=(some_future_time,0))</span>
+<span class="sd">                .pay(dest, amount).build()</span>
+<span class="sd">        #at some_future_time submit the transaction envelope</span>
+<span class="sd">        result = stellar.post_transaction(trx)</span>
 
 <span class="sd">    Each operation in transaction costs atleast a base fee (which is 100 stroops).</span>
 <span class="sd">    So if you submit 5 different operations in single transaction it will cost you</span>
@@ -1747,6 +1768,36 @@ on stellar network.</p>
 <span class="sd">        ps = stellar.payments().fetch().entries()</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">Payments</span><span class="o">.</span><span class="n">_All</span><span class="p">()</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="stellar.post_transaction">
+    <p>def <span class="ident">post_transaction</span>(</p><p>envelope_xdr)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Submits earlier prepared transaction envelope to the stellar network.
+envelope_xdr either created through NewTransaction.build() method or using some
+external utility such as Stellar laboratory.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-stellar.post_transaction', this);">Show source &equiv;</a></p>
+  <div id="source-stellar.post_transaction" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">post_transaction</span><span class="p">(</span><span class="n">envelope_xdr</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Submits earlier prepared transaction envelope to the stellar network.</span>
+<span class="sd">    envelope_xdr either created through NewTransaction.build() method or using some</span>
+<span class="sd">    external utility such as Stellar laboratory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">HTTP</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">horizon</span> <span class="o">+</span> <span class="s1">&#39;/transactions/&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;tx&#39;</span><span class="p">:</span> <span class="n">envelope_xdr</span> <span class="p">})</span>
+    <span class="k">return</span> <span class="n">TransactionResult</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
 </pre></div>
 
   </div>
@@ -2040,7 +2091,7 @@ to stellar network.</p>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">accid</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">accid</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;accid expected&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">accid</span> <span class="o">=</span> <span class="n">accid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">accid</span> <span class="o">=</span> <span class="n">_address_to_account</span><span class="p">(</span><span class="n">accid</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">paginated</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">streamed</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;/accounts/</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">accid</span>
@@ -2212,7 +2263,7 @@ to stellar network.</p>
     <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">accid</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">accid</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;accid expected&#39;</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">accid</span> <span class="o">=</span> <span class="n">accid</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">accid</span> <span class="o">=</span> <span class="n">_address_to_account</span><span class="p">(</span><span class="n">accid</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">paginated</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">streamed</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;/accounts/</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">accid</span>
@@ -3625,14 +3676,18 @@ Returned stream can be iterable using for-loop.</p></div>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;S&#39;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">account</span> <span class="o">=</span> <span class="n">account_from_secret</span><span class="p">(</span><span class="n">account</span><span class="p">)</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">account</span> <span class="o">=</span> <span class="n">_address_to_account</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">account</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">trx_result</span> <span class="o">=</span> <span class="bp">None</span>
+
     <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span>
 	
     <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">submit</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">submit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Submits transaction to network. &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Creates transaction and returns &#39;Transaction Envelope XDR&#39; without submitting it to network &quot;&quot;&quot;</span>
         <span class="n">account_seq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq</span> <span class="k">else</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">account</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">account</span><span class="p">)</span><span class="o">.</span><span class="n">fetch</span><span class="p">()</span><span class="o">.</span><span class="n">sequence</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">__add_set_options_op</span><span class="p">()</span>
@@ -3670,49 +3725,35 @@ Returned stream can be iterable using for-loop.</p></div>
         <span class="n">txpacker</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">StellarXDRPacker</span><span class="p">()</span>
         <span class="n">txpacker</span><span class="o">.</span><span class="n">pack_TransactionEnvelope</span><span class="p">(</span><span class="n">tre</span><span class="p">)</span>
 
-        <span class="n">payload</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">txpacker</span><span class="o">.</span><span class="n">get_buffer</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">txpacker</span><span class="o">.</span><span class="n">get_buffer</span><span class="p">())</span>
 
-        <span class="n">res</span> <span class="o">=</span> <span class="n">HTTP</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">horizon</span> <span class="o">+</span> <span class="s1">&#39;/transactions/&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;tx&#39;</span><span class="p">:</span> <span class="n">payload</span> <span class="p">})</span>
-        <span class="k">if</span> <span class="s1">&#39;status&#39;</span> <span class="ow">in</span> <span class="n">res</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]</span>
-            <span class="k">if</span> <span class="s1">&#39;extras&#39;</span> <span class="ow">in</span> <span class="n">res</span> <span class="ow">and</span> <span class="s1">&#39;result_codes&#39;</span> <span class="ow">in</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;extras&#39;</span><span class="p">]:</span>
-                <span class="n">result_codes</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;extras&#39;</span><span class="p">][</span><span class="s1">&#39;result_codes&#39;</span><span class="p">]</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">transaction_error</span> <span class="o">=</span> <span class="n">result_codes</span><span class="p">[</span><span class="s1">&#39;transaction&#39;</span><span class="p">]</span>\
-                        <span class="k">if</span> <span class="s1">&#39;transaction&#39;</span> <span class="ow">in</span> <span class="n">result_codes</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">operation_errors</span> <span class="o">=</span> <span class="n">result_codes</span><span class="p">[</span><span class="s1">&#39;operations&#39;</span><span class="p">]</span>\
-                        <span class="k">if</span> <span class="s1">&#39;operations&#39;</span> <span class="ow">in</span> <span class="n">result_codes</span> <span class="k">else</span> <span class="p">[]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">transaction_error</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">operation_errors</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">trxid</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;hash&#39;</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ledid</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;ledger&#39;</span><span class="p">]</span>
-
-        <span class="k">return</span> <span class="bp">self</span>
+    <span class="k">def</span> <span class="nf">submit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Submits transaction to network in context of this new transaction. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trx_result</span> <span class="o">=</span> <span class="n">post_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">())</span>
 
     <span class="k">def</span> <span class="nf">is_success</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns whether transaction was successful after submitting to network &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">True</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">trx_result</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Transaction not submitted&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">trx_result</span><span class="o">.</span><span class="n">is_success</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;If transaction was successful then (transaction-id, ledger-id) pair&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_success</span><span class="p">():</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trxid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ledid</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Transaction failed. Check errors()&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">trx_result</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Transaction not submitted&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">trx_result</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">errors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;If transaction was not successful then (transaction-error, list-of operation error) pair&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_success</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Transaction succeeded. Check result()&#39;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transaction_error</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation_errors</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">trx_result</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Transaction not submitted&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">trx_result</span><span class="o">.</span><span class="n">errors</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">create_account</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">account</span><span class="p">,</span> <span class="n">starting_balance</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Creates account with given starting balance</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">account</span> <span class="o">=</span> <span class="n">_address_to_account</span><span class="p">(</span><span class="n">account</span><span class="p">)</span>
+
         <span class="n">body</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">nullclass</span><span class="p">()</span>
         <span class="n">body</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">const</span><span class="o">.</span><span class="n">CREATE_ACCOUNT</span>
         <span class="n">body</span><span class="o">.</span><span class="n">createAccountOp</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">CreateAccountOp</span><span class="p">(</span>
@@ -3726,6 +3767,8 @@ Returned stream can be iterable using for-loop.</p></div>
         <span class="sd">&quot;&quot;&quot;Pays given account with given amount of specified asset.</span>
 <span class="sd">        asset can be &#39;native&#39; or tuple in format (asset_code, asset_issuer).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">account</span> <span class="o">=</span> <span class="n">_address_to_account</span><span class="p">(</span><span class="n">account</span><span class="p">)</span>
+
         <span class="n">body</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">nullclass</span><span class="p">()</span>
         <span class="n">body</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">const</span><span class="o">.</span><span class="n">PAYMENT</span>
         <span class="n">body</span><span class="o">.</span><span class="n">paymentOp</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">PaymentOp</span><span class="p">(</span>
@@ -3742,6 +3785,8 @@ Returned stream can be iterable using for-loop.</p></div>
 <span class="sd">        asset for intermediate exchanges can be specified (those path asset can be &#39;native&#39; or </span>
 <span class="sd">        tuple in format (asset_code, asset_issuer).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">destination</span> <span class="o">=</span> <span class="n">_address_to_account</span><span class="p">(</span><span class="n">destination</span><span class="p">)</span>
+
         <span class="n">pathxdr</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c1">#XXX is this tested?</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
@@ -3807,7 +3852,7 @@ Returned stream can be iterable using for-loop.</p></div>
 
     <span class="k">def</span> <span class="nf">set_inflation_destination</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">account</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sets the inflation of given account (SET_OPTIONS operation)&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_options_op</span><span class="p">[</span><span class="s1">&#39;inflation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">account</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_options_op</span><span class="p">[</span><span class="s1">&#39;inflation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_address_to_account</span><span class="p">(</span><span class="n">account</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="bp">self</span>
 
@@ -3931,14 +3976,20 @@ Returned stream can be iterable using for-loop.</p></div>
 
     <span class="k">def</span> <span class="nf">authorize_trust</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">account</span><span class="p">,</span> <span class="n">asset_code</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Authorize given account to perform transaction for given asset_code. &quot;&quot;&quot;</span>
+        <span class="n">account</span> <span class="o">=</span> <span class="n">_address_to_account</span><span class="p">(</span><span class="n">account</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__perform_trust_op</span><span class="p">(</span><span class="n">account</span><span class="p">,</span> <span class="n">asset_code</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
        
     <span class="k">def</span> <span class="nf">deauthorize_trust</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">account</span><span class="p">,</span> <span class="n">asset_code</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Deauthorize given account to perform transaction for given asset_code. &quot;&quot;&quot;</span>
+        <span class="n">account</span> <span class="o">=</span> <span class="n">_address_to_account</span><span class="p">(</span><span class="n">account</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__perform_trust_op</span><span class="p">(</span><span class="n">account</span><span class="p">,</span> <span class="n">asset_code</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">merge_this_account_with</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">account</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Merges current account with input account&quot;&quot;&quot;</span>
+        <span class="n">account</span> <span class="o">=</span> <span class="n">_address_to_account</span><span class="p">(</span><span class="n">account</span><span class="p">)</span>
+
         <span class="n">body</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">nullclass</span><span class="p">()</span>
         <span class="n">body</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">const</span><span class="o">.</span><span class="n">ACCOUNT_MERGE</span>
         <span class="n">body</span><span class="o">.</span><span class="n">destination</span> <span class="o">=</span> <span class="n">XDR</span><span class="o">.</span><span class="n">address_to_xdr</span><span class="p">(</span><span class="n">account</span><span class="p">)</span>
@@ -3990,7 +4041,6 @@ Returned stream can be iterable using for-loop.</p></div>
 
             
   
-    <div class="desc"><p>account on which transaction will be executed</p></div>
   <div class="source_cont">
 </div>
 
@@ -4070,6 +4120,16 @@ Returned stream can be iterable using for-loop.</p></div>
 </div>
 
             </div>
+            <div class="item">
+            <p id="stellar.NewTransaction.trx_result" class="name">var <span class="ident">trx_result</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
           <h3>Methods</h3>
             
   <div class="item">
@@ -4104,6 +4164,8 @@ Returned stream can be iterable using for-loop.</p></div>
         <span class="bp">self</span><span class="o">.</span><span class="n">signers</span> <span class="o">=</span> <span class="p">[</span><span class="n">account</span><span class="p">]</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;S&#39;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">account</span> <span class="o">=</span> <span class="n">account_from_secret</span><span class="p">(</span><span class="n">account</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">account</span> <span class="o">=</span> <span class="n">_address_to_account</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">account</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">trx_result</span> <span class="o">=</span> <span class="bp">None</span>
 </pre></div>
 
   </div>
@@ -4190,7 +4252,58 @@ price in (numerator, denominator) format. To buy 1 BTC at 100 XLM price would be
   <div id="source-stellar.NewTransaction.authorize_trust" class="source">
     <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">authorize_trust</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">account</span><span class="p">,</span> <span class="n">asset_code</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Authorize given account to perform transaction for given asset_code. &quot;&quot;&quot;</span>
+    <span class="n">account</span> <span class="o">=</span> <span class="n">_address_to_account</span><span class="p">(</span><span class="n">account</span><span class="p">)</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__perform_trust_op</span><span class="p">(</span><span class="n">account</span><span class="p">,</span> <span class="n">asset_code</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="stellar.NewTransaction.build">
+    <p>def <span class="ident">build</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Creates transaction and returns 'Transaction Envelope XDR' without submitting it to network</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-stellar.NewTransaction.build', this);">Show source &equiv;</a></p>
+  <div id="source-stellar.NewTransaction.build" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Creates transaction and returns &#39;Transaction Envelope XDR&#39; without submitting it to network &quot;&quot;&quot;</span>
+    <span class="n">account_seq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq</span> <span class="k">else</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">account</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">account</span><span class="p">)</span><span class="o">.</span><span class="n">fetch</span><span class="p">()</span><span class="o">.</span><span class="n">sequence</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">__add_set_options_op</span><span class="p">()</span>
+    <span class="n">base_fee</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fee</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fee</span> <span class="k">else</span> <span class="n">BASE_FEE</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ops</span><span class="p">)</span>
+    <span class="n">time_bounds</span> <span class="o">=</span> <span class="p">[</span><span class="n">XDR</span><span class="o">.</span><span class="n">time_bounds_to_xdr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_bounds</span><span class="p">)]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_bounds</span> <span class="k">else</span> <span class="p">[]</span>
+    <span class="n">xdr</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">nullclass</span><span class="p">()</span>
+    <span class="n">xdr</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">trxxdr</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">Transaction</span><span class="p">(</span>
+            <span class="n">XDR</span><span class="o">.</span><span class="n">address_to_xdr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">account</span><span class="p">),</span> 
+            <span class="n">base_fee</span><span class="p">,</span> 
+            <span class="n">account_seq</span><span class="p">,</span>
+            <span class="n">time_bounds</span><span class="p">,</span>
+            <span class="n">XDR</span><span class="o">.</span><span class="n">memo_to_xdr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">memo</span><span class="p">),</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">ops</span><span class="p">,</span>
+            <span class="n">xdr</span><span class="p">)</span>
+    <span class="n">trxtypepacker</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">StellarXDRPacker</span><span class="p">()</span>
+    <span class="n">trxtypepacker</span><span class="o">.</span><span class="n">pack_EnvelopeType</span><span class="p">(</span><span class="n">Xdr</span><span class="o">.</span><span class="n">const</span><span class="o">.</span><span class="n">ENVELOPE_TYPE_TX</span><span class="p">)</span>
+    <span class="n">trxtype</span> <span class="o">=</span> <span class="n">trxtypepacker</span><span class="o">.</span><span class="n">get_buffer</span><span class="p">()</span>
+    <span class="n">trxpacker</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">StellarXDRPacker</span><span class="p">()</span>
+    <span class="n">trxpacker</span><span class="o">.</span><span class="n">pack_Transaction</span><span class="p">(</span><span class="n">trxxdr</span><span class="p">)</span>
+    <span class="n">trx</span> <span class="o">=</span> <span class="n">trxpacker</span><span class="o">.</span><span class="n">get_buffer</span><span class="p">()</span>
+    <span class="n">trx_hash</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">network_id</span> <span class="o">+</span> <span class="n">trxtype</span> <span class="o">+</span> <span class="n">trx</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+    <span class="n">signatures</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">signer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">signers</span><span class="p">:</span>
+        <span class="n">signatures</span> <span class="o">+=</span> <span class="p">[</span><span class="n">_sign_trx_hash</span><span class="p">(</span><span class="n">signer</span><span class="p">,</span> <span class="n">trx_hash</span><span class="p">)]</span>
+    <span class="n">tre</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">TransactionEnvelope</span><span class="p">(</span><span class="n">trxxdr</span><span class="p">,</span> <span class="n">signatures</span><span class="p">)</span>
+    <span class="n">txpacker</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">StellarXDRPacker</span><span class="p">()</span>
+    <span class="n">txpacker</span><span class="o">.</span><span class="n">pack_TransactionEnvelope</span><span class="p">(</span><span class="n">tre</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">txpacker</span><span class="o">.</span><span class="n">get_buffer</span><span class="p">())</span>
 </pre></div>
 
   </div>
@@ -4246,6 +4359,7 @@ price in (numerator, denominator) format. To buy 1 BTC at 100 XLM price would be
     <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">create_account</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">account</span><span class="p">,</span> <span class="n">starting_balance</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Creates account with given starting balance</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">account</span> <span class="o">=</span> <span class="n">_address_to_account</span><span class="p">(</span><span class="n">account</span><span class="p">)</span>
     <span class="n">body</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">nullclass</span><span class="p">()</span>
     <span class="n">body</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">const</span><span class="o">.</span><span class="n">CREATE_ACCOUNT</span>
     <span class="n">body</span><span class="o">.</span><span class="n">createAccountOp</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">CreateAccountOp</span><span class="p">(</span>
@@ -4309,6 +4423,7 @@ limit is amount indicating limit of given asset</p></div>
   <div id="source-stellar.NewTransaction.deauthorize_trust" class="source">
     <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">deauthorize_trust</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">account</span><span class="p">,</span> <span class="n">asset_code</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Deauthorize given account to perform transaction for given asset_code. &quot;&quot;&quot;</span>
+    <span class="n">account</span> <span class="o">=</span> <span class="n">_address_to_account</span><span class="p">(</span><span class="n">account</span><span class="p">)</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__perform_trust_op</span><span class="p">(</span><span class="n">account</span><span class="p">,</span> <span class="n">asset_code</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
 </pre></div>
 
@@ -4332,10 +4447,9 @@ limit is amount indicating limit of given asset</p></div>
   <div id="source-stellar.NewTransaction.errors" class="source">
     <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">errors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;If transaction was not successful then (transaction-error, list-of operation error) pair&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_success</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Transaction succeeded. Check result()&#39;</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transaction_error</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation_errors</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">trx_result</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Transaction not submitted&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">trx_result</span><span class="o">.</span><span class="n">errors</span><span class="p">()</span>
 </pre></div>
 
   </div>
@@ -4358,7 +4472,9 @@ limit is amount indicating limit of given asset</p></div>
   <div id="source-stellar.NewTransaction.is_success" class="source">
     <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">is_success</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns whether transaction was successful after submitting to network &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="bp">True</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">False</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">trx_result</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Transaction not submitted&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">trx_result</span><span class="o">.</span><span class="n">is_success</span><span class="p">()</span>
 </pre></div>
 
   </div>
@@ -4381,6 +4497,7 @@ limit is amount indicating limit of given asset</p></div>
   <div id="source-stellar.NewTransaction.merge_this_account_with" class="source">
     <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">merge_this_account_with</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">account</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Merges current account with input account&quot;&quot;&quot;</span>
+    <span class="n">account</span> <span class="o">=</span> <span class="n">_address_to_account</span><span class="p">(</span><span class="n">account</span><span class="p">)</span>
     <span class="n">body</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">nullclass</span><span class="p">()</span>
     <span class="n">body</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">const</span><span class="o">.</span><span class="n">ACCOUNT_MERGE</span>
     <span class="n">body</span><span class="o">.</span><span class="n">destination</span> <span class="o">=</span> <span class="n">XDR</span><span class="o">.</span><span class="n">address_to_xdr</span><span class="p">(</span><span class="n">account</span><span class="p">)</span>
@@ -4415,6 +4532,7 @@ tuple in format (asset_code, asset_issuer).</p></div>
 <span class="sd">    asset for intermediate exchanges can be specified (those path asset can be &#39;native&#39; or </span>
 <span class="sd">    tuple in format (asset_code, asset_issuer).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">destination</span> <span class="o">=</span> <span class="n">_address_to_account</span><span class="p">(</span><span class="n">destination</span><span class="p">)</span>
     <span class="n">pathxdr</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="c1">#XXX is this tested?</span>
     <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
@@ -4455,6 +4573,7 @@ asset can be 'native' or tuple in format (asset_code, asset_issuer).</p></div>
     <span class="sd">&quot;&quot;&quot;Pays given account with given amount of specified asset.</span>
 <span class="sd">    asset can be &#39;native&#39; or tuple in format (asset_code, asset_issuer).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">account</span> <span class="o">=</span> <span class="n">_address_to_account</span><span class="p">(</span><span class="n">account</span><span class="p">)</span>
     <span class="n">body</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">nullclass</span><span class="p">()</span>
     <span class="n">body</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">const</span><span class="o">.</span><span class="n">PAYMENT</span>
     <span class="n">body</span><span class="o">.</span><span class="n">paymentOp</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">PaymentOp</span><span class="p">(</span>
@@ -4590,10 +4709,9 @@ asset is tuple in format (asset_code, asset_issuer) or 'native'.</p></div>
   <div id="source-stellar.NewTransaction.result" class="source">
     <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;If transaction was successful then (transaction-id, ledger-id) pair&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_success</span><span class="p">():</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trxid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ledid</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Transaction failed. Check errors()&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">trx_result</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Transaction not submitted&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">trx_result</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
 </pre></div>
 
   </div>
@@ -4698,7 +4816,7 @@ asset is tuple in format (asset_code, asset_issuer) or 'native'.</p></div>
   <div id="source-stellar.NewTransaction.set_inflation_destination" class="source">
     <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">set_inflation_destination</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">account</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Sets the inflation of given account (SET_OPTIONS operation)&quot;&quot;&quot;</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">set_options_op</span><span class="p">[</span><span class="s1">&#39;inflation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">account</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">set_options_op</span><span class="p">[</span><span class="s1">&#39;inflation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_address_to_account</span><span class="p">(</span><span class="n">account</span><span class="p">)</span>
     <span class="k">return</span> <span class="bp">self</span>
 </pre></div>
 
@@ -4798,58 +4916,13 @@ available signer_type are ('ed25519PublicKey','hashX','preAuthTx')</p></div>
 
     
   
-    <div class="desc"><p>Submits transaction to network.</p></div>
+    <div class="desc"><p>Submits transaction to network in context of this new transaction.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-stellar.NewTransaction.submit', this);">Show source &equiv;</a></p>
   <div id="source-stellar.NewTransaction.submit" class="source">
     <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">submit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Submits transaction to network. &quot;&quot;&quot;</span>
-    <span class="n">account_seq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq</span> <span class="k">else</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">account</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">account</span><span class="p">)</span><span class="o">.</span><span class="n">fetch</span><span class="p">()</span><span class="o">.</span><span class="n">sequence</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">__add_set_options_op</span><span class="p">()</span>
-    <span class="n">base_fee</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fee</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fee</span> <span class="k">else</span> <span class="n">BASE_FEE</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ops</span><span class="p">)</span>
-    <span class="n">time_bounds</span> <span class="o">=</span> <span class="p">[</span><span class="n">XDR</span><span class="o">.</span><span class="n">time_bounds_to_xdr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_bounds</span><span class="p">)]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_bounds</span> <span class="k">else</span> <span class="p">[]</span>
-    <span class="n">xdr</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">nullclass</span><span class="p">()</span>
-    <span class="n">xdr</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">trxxdr</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">Transaction</span><span class="p">(</span>
-            <span class="n">XDR</span><span class="o">.</span><span class="n">address_to_xdr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">account</span><span class="p">),</span> 
-            <span class="n">base_fee</span><span class="p">,</span> 
-            <span class="n">account_seq</span><span class="p">,</span>
-            <span class="n">time_bounds</span><span class="p">,</span>
-            <span class="n">XDR</span><span class="o">.</span><span class="n">memo_to_xdr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">memo</span><span class="p">),</span> 
-            <span class="bp">self</span><span class="o">.</span><span class="n">ops</span><span class="p">,</span>
-            <span class="n">xdr</span><span class="p">)</span>
-    <span class="n">trxtypepacker</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">StellarXDRPacker</span><span class="p">()</span>
-    <span class="n">trxtypepacker</span><span class="o">.</span><span class="n">pack_EnvelopeType</span><span class="p">(</span><span class="n">Xdr</span><span class="o">.</span><span class="n">const</span><span class="o">.</span><span class="n">ENVELOPE_TYPE_TX</span><span class="p">)</span>
-    <span class="n">trxtype</span> <span class="o">=</span> <span class="n">trxtypepacker</span><span class="o">.</span><span class="n">get_buffer</span><span class="p">()</span>
-    <span class="n">trxpacker</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">StellarXDRPacker</span><span class="p">()</span>
-    <span class="n">trxpacker</span><span class="o">.</span><span class="n">pack_Transaction</span><span class="p">(</span><span class="n">trxxdr</span><span class="p">)</span>
-    <span class="n">trx</span> <span class="o">=</span> <span class="n">trxpacker</span><span class="o">.</span><span class="n">get_buffer</span><span class="p">()</span>
-    <span class="n">trx_hash</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">network_id</span> <span class="o">+</span> <span class="n">trxtype</span> <span class="o">+</span> <span class="n">trx</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
-    <span class="n">signatures</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">signer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">signers</span><span class="p">:</span>
-        <span class="n">signatures</span> <span class="o">+=</span> <span class="p">[</span><span class="n">_sign_trx_hash</span><span class="p">(</span><span class="n">signer</span><span class="p">,</span> <span class="n">trx_hash</span><span class="p">)]</span>
-    <span class="n">tre</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">TransactionEnvelope</span><span class="p">(</span><span class="n">trxxdr</span><span class="p">,</span> <span class="n">signatures</span><span class="p">)</span>
-    <span class="n">txpacker</span> <span class="o">=</span> <span class="n">Xdr</span><span class="o">.</span><span class="n">StellarXDRPacker</span><span class="p">()</span>
-    <span class="n">txpacker</span><span class="o">.</span><span class="n">pack_TransactionEnvelope</span><span class="p">(</span><span class="n">tre</span><span class="p">)</span>
-    <span class="n">payload</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">txpacker</span><span class="o">.</span><span class="n">get_buffer</span><span class="p">())</span>
-    <span class="n">res</span> <span class="o">=</span> <span class="n">HTTP</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">horizon</span> <span class="o">+</span> <span class="s1">&#39;/transactions/&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;tx&#39;</span><span class="p">:</span> <span class="n">payload</span> <span class="p">})</span>
-    <span class="k">if</span> <span class="s1">&#39;status&#39;</span> <span class="ow">in</span> <span class="n">res</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="s1">&#39;extras&#39;</span> <span class="ow">in</span> <span class="n">res</span> <span class="ow">and</span> <span class="s1">&#39;result_codes&#39;</span> <span class="ow">in</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;extras&#39;</span><span class="p">]:</span>
-            <span class="n">result_codes</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;extras&#39;</span><span class="p">][</span><span class="s1">&#39;result_codes&#39;</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">transaction_error</span> <span class="o">=</span> <span class="n">result_codes</span><span class="p">[</span><span class="s1">&#39;transaction&#39;</span><span class="p">]</span>\
-                    <span class="k">if</span> <span class="s1">&#39;transaction&#39;</span> <span class="ow">in</span> <span class="n">result_codes</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">operation_errors</span> <span class="o">=</span> <span class="n">result_codes</span><span class="p">[</span><span class="s1">&#39;operations&#39;</span><span class="p">]</span>\
-                    <span class="k">if</span> <span class="s1">&#39;operations&#39;</span> <span class="ow">in</span> <span class="n">result_codes</span> <span class="k">else</span> <span class="p">[]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">transaction_error</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">operation_errors</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">trxid</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;hash&#39;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ledid</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;ledger&#39;</span><span class="p">]</span>
-    <span class="k">return</span> <span class="bp">self</span>
+    <span class="sd">&quot;&quot;&quot;Submits transaction to network in context of this new transaction. &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">trx_result</span> <span class="o">=</span> <span class="n">post_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">())</span>
 </pre></div>
 
   </div>

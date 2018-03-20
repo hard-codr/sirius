@@ -800,6 +800,46 @@ class PaymentPaths(object):
         def _map2obj(self, data):
             return PaymentPaths(data)
 
+class TransactionResult(object):
+    """
+    Result when you submit transaction using post_transaction method.
+    """
+    def __init__(self, res):
+        if 'status' in res:
+            self.status = res['status']
+            self.error = res['title']
+            if 'extras' in res and 'result_codes' in res['extras']:
+                result_codes = res['extras']['result_codes']
+                self.transaction_error = result_codes['transaction']\
+                        if 'transaction' in result_codes else ''
+                self.operation_errors = result_codes['operations']\
+                        if 'operations' in result_codes else []
+            else:
+                self.transaction_error = ''
+                self.operation_errors = []
+        else:
+            self.status = 0
+            self.trxid = res['hash']
+            self.ledid = res['ledger']
+
+    def is_success(self):
+        """Returns whether transaction was successful after submitting to network """
+        return True if self.status == 0 else False
+
+    def result(self):
+        """If transaction was successful then (transaction-id, ledger-id) pair"""
+        if self.is_success():
+            return (self.trxid, self.ledid)
+        else:
+            raise Exception('Transaction failed. Check errors()')
+
+    def errors(self):
+        """If transaction was not successful then (transaction-error, list-of operation error) pair"""
+        if self.is_success():
+            raise Exception('Transaction succeeded. Check result()')
+        else:
+            return (self.error, self.transaction_error, self.operation_errors)
+
 class NewTransaction(object):
     def __init__(self, account, signers, seq, fee, memo, time_bounds):
         self.account = account
@@ -827,14 +867,16 @@ class NewTransaction(object):
 
         self.account = _address_to_account(self.account)
 
+        self.trx_result = None
+
     def __enter__(self):
         return self
 	
     def __exit__(self, *args):
         self.submit()
 
-    def submit(self):
-        """Submits transaction to network. """
+    def build(self):
+        """Creates transaction and returns 'Transaction Envelope XDR' without submitting it to network """
         account_seq = self.seq if self.seq else (int(account(self.account).fetch().sequence) + 1)
 
         self.__add_set_options_op()
@@ -872,45 +914,29 @@ class NewTransaction(object):
         txpacker = Xdr.StellarXDRPacker()
         txpacker.pack_TransactionEnvelope(tre)
 
-        payload = base64.b64encode(txpacker.get_buffer())
+        return base64.b64encode(txpacker.get_buffer())
 
-        res = HTTP.post(horizon + '/transactions/', {'tx': payload })
-        if 'status' in res:
-            self.status = res['status']
-            self.error = res['title']
-            if 'extras' in res and 'result_codes' in res['extras']:
-                result_codes = res['extras']['result_codes']
-                self.transaction_error = result_codes['transaction']\
-                        if 'transaction' in result_codes else ''
-                self.operation_errors = result_codes['operations']\
-                        if 'operations' in result_codes else []
-            else:
-                self.transaction_error = ''
-                self.operation_errors = []
-        else:
-            self.status = 0
-            self.trxid = res['hash']
-            self.ledid = res['ledger']
-
-        return self
+    def submit(self):
+        """Submits transaction to network in context of this new transaction. """
+        self.trx_result = post_transaction(self.build())
 
     def is_success(self):
         """Returns whether transaction was successful after submitting to network """
-        return True if self.status == 0 else False
+        if not self.trx_result:
+            raise Exception('Transaction not submitted')
+        return self.trx_result.is_success()
 
     def result(self):
         """If transaction was successful then (transaction-id, ledger-id) pair"""
-        if self.is_success():
-            return (self.trxid, self.ledid)
-        else:
-            raise Exception('Transaction failed. Check errors()')
+        if not self.trx_result:
+            raise Exception('Transaction not submitted')
+        return self.trx_result.result()
 
     def errors(self):
         """If transaction was not successful then (transaction-error, list-of operation error) pair"""
-        if self.is_success():
-            raise Exception('Transaction succeeded. Check result()')
-        else:
-            return (self.error, self.transaction_error, self.operation_errors)
+        if not self.trx_result:
+            raise Exception('Transaction not submitted')
+        return self.trx_result.errors()
 
     def create_account(self, account, starting_balance):
         """Creates account with given starting balance
@@ -1333,11 +1359,20 @@ def new_transaction(account, signers=[], seq=None, fee=None, memo=None, time_bou
 
     Can be used with with-statement as follows:
 
-        with new_transaction(account, memo='double payment') as t:
+        with stellar.new_transaction(account, memo='double payment') as t:
             t.pay(destination1, amount1)
             t.pay(destination2, amount2)
 
     This will autmoatically submit the transaction when with-statement completes.
+
+    You can prepare transaction in xdr format and then submit this prepared transaction
+    (as required in smart contracts) at some later time:
+
+        trx = stellar.new_transaction(account,
+                time_bounds=(some_future_time,0))
+                .pay(dest, amount).build()
+        #at some_future_time submit the transaction envelope
+        result = stellar.post_transaction(trx)
 
     Each operation in transaction costs atleast a base fee (which is 100 stroops).
     So if you submit 5 different operations in single transaction it will cost you
@@ -1346,3 +1381,12 @@ def new_transaction(account, signers=[], seq=None, fee=None, memo=None, time_bou
     cost you 100 stroops. 
     """
     return NewTransaction(account, signers, seq, fee, memo, time_bounds)
+
+def post_transaction(envelope_xdr):
+    """
+    Submits earlier prepared transaction envelope to the stellar network.
+    envelope_xdr either created through NewTransaction.build() method or using some
+    external utility such as Stellar laboratory.
+    """
+    res = HTTP.post(horizon + '/transactions/', {'tx': envelope_xdr })
+    return TransactionResult(res)
