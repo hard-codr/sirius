@@ -1053,3 +1053,69 @@ def test_payment_path_fetch():
 
         get_mock.assert_called_once_with(endpoint)
 
+def test_trades_fetch():
+    stellar.setup_test_network()
+    trades = {
+            "_links": {
+                "self": {
+                    "href": "https://horizon.stellar.org/trades?base_asset_type=native&counter_asset_code=CNY&counter_asset_issuer=GAREELUB43IRHWEASCFBLKHURCGMHE5IF6XSE7EXDLACYHGRHM43RFOX&counter_asset_type=credit_alphanum4&cursor=&limit=10&order=desc"
+                    },
+                "next": {
+                    "href": "https://horizon.stellar.org/trades?base_asset_type=native&counter_asset_code=CNY&counter_asset_issuer=GAREELUB43IRHWEASCFBLKHURCGMHE5IF6XSE7EXDLACYHGRHM43RFOX&counter_asset_type=credit_alphanum4&cursor=77625370597195777-0&limit=10&order=desc"
+                    },
+                "prev": {
+                    "href": "https://horizon.stellar.org/trades?base_asset_type=native&counter_asset_code=CNY&counter_asset_issuer=GAREELUB43IRHWEASCFBLKHURCGMHE5IF6XSE7EXDLACYHGRHM43RFOX&counter_asset_type=credit_alphanum4&cursor=77632736466051073-0&limit=10&order=asc"
+                    }
+                },
+            "_embedded": {
+                "records": [
+                    {
+                        "id": "77632736466051073-0",
+                        "paging_token": "77632736466051073-0",
+                        "ledger_close_time": "2018-05-26T14:50:11Z",
+                        "offer_id": 11094929,
+                        "base_account": "GC6OFEG2ZFALBMPAD7L5EO7VYIPM6SZ52F7TASBMC67XEBFHCL2RGEON",
+                        "base_amount": "194.0000000",
+                        "base_asset_type": "native",
+                        "counter_account": "GBDTBUKFHJOEAFAVNPGIY65CBIH75DYEZ5VQXOE7YHZM7AJKDNEOW5JG",
+                        "counter_amount": "368.6000000",
+                        "counter_asset_type": "credit_alphanum4",
+                        "counter_asset_code": "CNY",
+                        "counter_asset_issuer": "GAREELUB43IRHWEASCFBLKHURCGMHE5IF6XSE7EXDLACYHGRHM43RFOX",
+                        "base_is_seller": False,
+                        "price": {
+                            "n": 19,
+                            "d": 10
+                            }                        
+                        },
+                    {
+                        "id": "77632714991214593-2",
+                        "paging_token": "77632714991214593-2",
+                        "ledger_close_time": "2018-05-26T14:49:46Z",
+                        "offer_id": 11094929,
+                        "base_account": "GC6OFEG2ZFALBMPAD7L5EO7VYIPM6SZ52F7TASBMC67XEBFHCL2RGEON",
+                        "base_amount": "373.9851953",
+                        "base_asset_type": "native",
+                        "counter_account": "GBDTBUKFHJOEAFAVNPGIY65CBIH75DYEZ5VQXOE7YHZM7AJKDNEOW5JG",
+                        "counter_amount": "710.5718710",
+                        "counter_asset_type": "credit_alphanum4",
+                        "counter_asset_code": "CNY",
+                        "counter_asset_issuer": "GAREELUB43IRHWEASCFBLKHURCGMHE5IF6XSE7EXDLACYHGRHM43RFOX",
+                        "base_is_seller": False,
+                        "price": {
+                            "n": 19,
+                            "d": 10
+                            }                    
+                        }
+                    ]
+                }
+            }
+    horizon, _ = stellar.get_current_network()
+    endpoint = horizon + '/trades?base_asset_type=native&counter_asset_type=credit_alphanum4&counter_asset_code=CNY&counter_asset_issuer=GAREELUB43IRHWEASCFBLKHURCGMHE5IF6XSE7EXDLACYHGRHM43RFOX&limit=10&order=desc'
+    with patch.object(stellar.utils.HTTP, 'get', return_value=trades) as get_mock:
+        p = stellar.trades(selling='native', 
+                buying=('CNY', 'GAREELUB43IRHWEASCFBLKHURCGMHE5IF6XSE7EXDLACYHGRHM43RFOX')).fetch(order='desc')
+
+        get_mock.assert_called_once_with(endpoint)
+
+        assert len(p.entries()) == 2

@@ -325,7 +325,6 @@ class Accounts(Fetchable):
         """Returns fechable object for effects associated with given account"""
         return Effects._All(self.url)
 
-
 class Transactions(Fetchable):
     class Transaction(object):
         """Transactin: https://www.stellar.org/developers/horizon/reference/resources/transaction.html"""
@@ -737,6 +736,36 @@ class Orderbooks(object):
 
         def _map2obj(self, data):
             return Orderbooks.Orderbook(data)
+
+class Trades(object):
+    class Trade(object):
+        def __init__(self, data):
+            self.tradeid = data['id']
+            self.paging_token = data['paging_token']
+            self.ledger_close_time = datetime.datetime.strptime(
+                    data['ledger_close_time'], '%Y-%m-%dT%H:%M:%SZ')
+            self.offer_id = int(data['offer_id'])
+            self.base_account = data['base_account']
+            self.base_amount = data['base_amount']
+            self.base_asset = Asset(data, 'base_')
+            self.counter_amount = data['counter_amount']
+            self.counter_asset = Asset(data, 'counter_')
+            self.is_sell = data['base_is_seller']
+            self.price = data['price']
+
+        def __repr__(self):
+            return 'Trade(base=%s,counter=%s,price=%.6f)' % (self.base_asset, \
+                    self.counter_asset, float(self.price['n'])/self.price['d'])
+
+    class _All(Fetchable):
+        def __init__(self, selling, buying):
+            self.paginated = True
+            self.streamed = False
+            self.url = '/trades?%s&%s' %\
+                    (Asset.format_url_parameters(selling, 'base_'),
+                            Asset.format_url_parameters(buying, 'counter_'))
+        def _map2obj(self, data):
+            return Trades.Trade(data)
 
 class Assets(object):
     class AssetDetails(object):
@@ -1308,7 +1337,7 @@ def trades(buying, selling):
     """Returns all the trade where buying <-> selling assets are being traded.
     Curently stellar network always returns resource not found for this query.
     """
-    raise NotImplementedError
+    return Trades._All(buying=buying, selling=selling)
 
 def find_payment_path(from_account, to_account, to_asset, amount):
     """
