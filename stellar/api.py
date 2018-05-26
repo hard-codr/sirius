@@ -761,9 +761,14 @@ class Trades(object):
         def __init__(self, selling, buying):
             self.paginated = True
             self.streamed = False
-            self.url = '/trades?%s&%s' %\
-                    (Asset.format_url_parameters(selling, 'base_'),
-                            Asset.format_url_parameters(buying, 'counter_'))
+            self.url = '/trades?'
+            if selling:
+                self.url = self.url + Asset.format_url_parameters(selling, 'base_') + '&'
+            if buying:
+                self.url = self.url + Asset.format_url_parameters(buying, 'counter_')
+            else:
+                self.url = self.url[:-1]
+
         def _map2obj(self, data):
             return Trades.Trade(data)
 
@@ -1333,7 +1338,7 @@ def payments():
     """
     return Payments._All()
 
-def trades(buying, selling):
+def trades(buying=None, selling=None):
     """Returns all the trade where buying <-> selling assets are being traded.
     Curently stellar network always returns resource not found for this query.
     """

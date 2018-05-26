@@ -1119,3 +1119,16 @@ def test_trades_fetch():
         get_mock.assert_called_once_with(endpoint)
 
         assert len(p.entries()) == 2
+
+    endpoint = horizon + '/trades?base_asset_type=native&limit=10&order=desc'
+    with patch.object(stellar.utils.HTTP, 'get', return_value=trades) as get_mock:
+        p = stellar.trades(selling='native').fetch(order='desc')
+
+        get_mock.assert_called_once_with(endpoint)
+
+    endpoint = horizon + '/trades?limit=10&order=desc'
+    with patch.object(stellar.utils.HTTP, 'get', return_value=trades) as get_mock:
+        p = stellar.trades().fetch(order='desc')
+
+        get_mock.assert_called_once_with(endpoint)
+
