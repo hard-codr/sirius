@@ -9,19 +9,19 @@ def test_network_setup():
     stellar.setup_test_network()
     (horizon, network_id) = stellar.get_current_network()
     assert stellar.api.HORIZON_TESTNET_ENDPOINT == horizon
-    assert hashlib.sha256(stellar.api.NETWORK_PASSWORD_TESTNET).digest() == network_id
+    assert hashlib.sha256(stellar.api.NETWORK_PASSWORD_TESTNET.encode('utf-8')).digest() == network_id
 
     stellar.setup_public_network()
     (horizon, network_id) = stellar.get_current_network()
     assert stellar.api.HORIZON_PUBLIC_ENDPOINT == horizon
-    assert hashlib.sha256(stellar.api.NETWORK_PASSWORD_PUBLIC).digest() == network_id
+    assert hashlib.sha256(stellar.api.NETWORK_PASSWORD_PUBLIC.encode('utf-8')).digest() == network_id
 
     custom_network = 'http://horizon.sirius.com'
     custom_network_password = 'Why so sirius'
     stellar.setup_custom_network(custom_network, custom_network_password)
     (horizon, network_id) = stellar.get_current_network()
     assert custom_network == horizon
-    assert hashlib.sha256(custom_network_password).digest() == network_id
+    assert hashlib.sha256(custom_network_password.encode('utf-8')).digest() == network_id
 
 def test_shorten_address():
     address = 'GDZ4R34MNVITLNZ4KVKBEANJU3UZZFZZLOX7ZVU5AWI7FEL5A6JWDM24'
@@ -102,7 +102,8 @@ def test_account_fetch():
         assert a.account_id == accid
         assert a.sequence == '28551671273488385'
         assert len(a.data) == 1 and a.data[0].key == 'image_link'\
-                and a.data[0].value == 'http://bit.ly/2FAJsJ0'
+                and (a.data[0].value == 'http://bit.ly/2FAJsJ0'\
+                   or a.data[0].value == b'http://bit.ly/2FAJsJ0')
 
         assert len(a.signers) == 3
         found = 0

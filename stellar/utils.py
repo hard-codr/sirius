@@ -87,7 +87,7 @@ class XDR(object):
     def signer_to_xdr(signer_type, signer, weight):
         key = None
         if signer_type == 'ed25519PublicKey':
-            key = Xdr.types.SignerKey(Xdr.const.SIGNER_KEY_TYPE_ED25519, XDR.address_to_xdr(signer))
+            key = Xdr.types.SignerKey(Xdr.const.SIGNER_KEY_TYPE_ED25519, XDR.address_to_xdr(signer).ed25519)
         elif signer_type == 'hashX':
             key = Xdr.types.SignerKey(Xdr.const.SIGNER_KEY_TYPE_HASH_X, hashX=signer)
         elif signer_type == 'preAuthTx':
@@ -117,7 +117,7 @@ class XDR(object):
                     return Xdr.types.Asset(type=Xdr.const.ASSET_TYPE_CREDIT_ALPHANUM12,
                             alphaNum12=xdr)
 
-        if ((type(asset) == str or type(asset) == unicode) and asset == 'native') \
+        if (type(asset) == str and asset == 'native') \
                 or (len(asset) == 1 and asset[0] == 'native'):
                     return _to_xdr('native')
         else:
@@ -130,7 +130,7 @@ class XDR(object):
     #where type in ('id', 'hash', 'return')
     @staticmethod
     def memo_to_xdr(memo):
-        if type(memo) == str or type(memo) == unicode:
+        if type(memo) == str:
             #raise length error if len(memo) > 28
             return Xdr.types.Memo(type=Xdr.const.MEMO_TEXT, 
                     text=bytearray(memo, encoding='utf-8'))

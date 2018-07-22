@@ -24,28 +24,28 @@ BASE_FEE = 100
 
 horizon = HORIZON_TESTNET_ENDPOINT
 network_password = NETWORK_PASSWORD_TESTNET
-network_id = hashlib.sha256(network_password).digest()
+network_id = hashlib.sha256(network_password.encode('utf-8')).digest()
 
 def setup_test_network():
     """Sets the current network to stellar.org test network"""
     global horizon, network_id, network_password
     horizon = HORIZON_TESTNET_ENDPOINT
     network_password = NETWORK_PASSWORD_TESTNET
-    network_id = hashlib.sha256(network_password).digest()
+    network_id = hashlib.sha256(network_password.encode('utf-8')).digest()
 
 def setup_public_network():
     """Sets the current network to stellar.org public network"""
     global horizon, network_id, network_password
     horizon = HORIZON_PUBLIC_ENDPOINT
     network_password = NETWORK_PASSWORD_PUBLIC
-    network_id = hashlib.sha256(network_password).digest()
+    network_id = hashlib.sha256(network_password.encode('utf-8')).digest()
 
 def setup_custom_network(horizon_url, password):
     """Sets network to custom horizon endpoint"""
     global horizon, network_id, network_password
     horizon = horizon_url
     network_password = password
-    network_id = hashlib.sha256(network_password).digest()
+    network_id = hashlib.sha256(network_password.encode('utf-8')).digest()
 
 def get_current_network():
     """Returns tuple containing horizon endpoint url and current network_id"""
@@ -112,7 +112,7 @@ class Asset(object):
         asset is tuple in form (asset_code,asset_issuer) or 'native'
         if prefix is given then url parameter will be prefixed with it.
         """
-        if ((type(asset) == str or type(asset) == unicode) and asset == 'native') \
+        if (type(asset) == str and asset == 'native') \
                 or (len(asset) == 1 and asset[0] == 'native'):
             return '%sasset_type=native' % prefix
         else:
@@ -285,7 +285,7 @@ class Accounts(Fetchable):
             self.flags = Accounts.Flags(data['flags'])
             self.balances = [Accounts.Balance(b) for b in data['balances']]
             self.signers = [Accounts.Signer(s) for s in data['signers']]
-            self.data = [Accounts.Data({'key' : k, 'value' : v}) for k,v in data['data'].iteritems()]
+            self.data = [Accounts.Data({'key' : k, 'value' : v}) for k,v in data['data'].items()]
             if 'inflation_destination' in data:
                 self.inflation_destination = data['inflation_destination']
             else:
@@ -948,7 +948,7 @@ class NewTransaction(object):
         txpacker = Xdr.StellarXDRPacker()
         txpacker.pack_TransactionEnvelope(tre)
 
-        return base64.b64encode(txpacker.get_buffer())
+        return base64.b64encode(txpacker.get_buffer()).decode('utf-8')
 
     def submit(self):
         """Submits transaction to network in context of this new transaction. """
@@ -1134,7 +1134,7 @@ class NewTransaction(object):
 	
     def set_home_domain(self, domain):
         """Sets home domain of the given account (SET_OPTIONS operation)"""
-        self.set_options_op['home_domain'] = domain;
+        self.set_options_op['home_domain'] = domain.encode('utf-8')
         return self
 
     def __add_set_options_op(self):
