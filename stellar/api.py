@@ -1377,7 +1377,7 @@ def orderbook(buying, selling):
         book = stellar.orderbook(selling=('AST1', 'GAEE__ADED__'),
                 buying=('AST2', 'GDAA__3EFD__')).fetch().entries()
     """
-    return Orderbooks._All(buying, selling)
+    return Orderbooks._All(selling, buying)
 
 def new_transaction(account, signers=[], seq=None, fee=None, memo=None, time_bounds=[]):
     """
